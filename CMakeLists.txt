@@ -1,0 +1,14 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.13 FATAL_ERROR)
+PROJECT(utvm_staticrt_codegen)
+
+INCLUDE(cmake/LinkTVM.cmake)
+
+
+ADD_LIBRARY(${PROJECT_NAME}_lib STATIC
+    src/TVMInfoExtraction.c
+    src/CodeGen.cpp
+)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME}_lib PUBLIC tvm_static_rt)
+
+ADD_EXECUTABLE(${PROJECT_NAME} src/main.cpp)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC ${PROJECT_NAME}_lib)
