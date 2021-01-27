@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    void *grt = create_tvm_rt(ssGraphFile.str().c_str());
+    void *grt = create_tvm_rt(ssGraphFile.str().c_str(), paramData.data(), paramData.size());
     auto *gi = extract_graph_info(grt, paramData.data(), paramData.size());
 
     CodeGenerator cg(gi);

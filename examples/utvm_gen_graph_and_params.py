@@ -16,7 +16,7 @@ from tvm.contrib import graph_runtime
 
 from tflite.TensorType import TensorType as TType
 
-import compiler_riscv
+import compiler_ext
 import codegen
 
 
@@ -59,7 +59,7 @@ class TVMFlow:
         if self.local:
             self.target = "llvm"
         else:
-            self.target = tvm.target.Target("c -mcpu=rv32gc -runtime=c --system-lib -model=unknown")
+            self.target = tvm.target.Target("c -mcpu=armv6-m -runtime=c --system-lib -model=unknown")
 
 
     def loadModel(self, path):
@@ -97,13 +97,13 @@ class TVMFlow:
             # Cross compile
             self.workspace = tvm.micro.Workspace(debug=True)
             opts = tvm.micro.default_options(os.path.join(tvm.micro.CRT_ROOT_DIR, "host"))
-            self.compiler = compiler_riscv.Compiler_RISCV(target=self.target)
+            self.compiler = compiler_ext.Compiler_Ext(target=self.target)
             self.micro_binary = tvm.micro.build_static_runtime(self.workspace, self.compiler, c_mod, lib_opts=opts["bin_opts"], bin_opts=opts["bin_opts"])
 
             # Prepare target data
             outDir = "out"
             os.makedirs(outDir, exist_ok=True)
-            shutil.copy2(self.workspace.path + "/src/module/module.c", outDir + "/kernels.c")
+            shutil.copy2(self.workspace.path + "/src/module/lib1.c", outDir + "/kernels.c")
             with open(outDir + "/graph.json", "w") as f:
                 f.write(self.graph)
             with open(outDir + "/params.bin", "wb") as f:

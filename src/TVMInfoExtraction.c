@@ -3,11 +3,10 @@
 #include "tvm/runtime/crt/internal/graph_runtime/graph_runtime.h"
 #include "tvm/runtime/crt/crt.h"
 #include "tvm/runtime/crt/packed_func.h"
+#include "tvm/runtime/crt/memory.h"
+#include "bundle.h"
 
 #include <stdbool.h>
-
-
-static uint8_t g_arena[100000*0x1000];
 
 
 const TVMModule* TVMSystemLibEntryPoint(void) {
@@ -16,25 +15,9 @@ const TVMModule* TVMSystemLibEntryPoint(void) {
 TVMModuleHandle TVMArgs_AsModuleHandle(const TVMArgs* args, size_t index);
 
 
-void *create_tvm_rt(const char *json_data)
+void *create_tvm_rt(const char *json_data, const char *params_data, uint64_t params_size)
 {
-    TVMInitializeRuntime(g_arena, sizeof(g_arena), 0x1000);
-
-    TVMPackedFunc pf;
-    TVMArgs args = TVMArgs_Create(NULL, NULL, 0);
-    TVMPackedFunc_InitGlobalFunc(&pf, "runtime.SystemLib", &args);
-    TVMPackedFunc_Call(&pf);
-    TVMModuleHandle mod_syslib = TVMArgs_AsModuleHandle(&pf.ret_value, 0);
-
-    int64_t device_type = kDLCPU;
-    int64_t device_id = 0;
-    TVMContext ctx;
-    ctx.device_type = (DLDeviceType)device_type;
-    ctx.device_id = device_id;
-
-    TVMGraphRuntime* graph_runtime = TVMGraphRuntime_Create(json_data, mod_syslib, &ctx);
-
-    return graph_runtime;
+    return (TVMGraphRuntime*)tvm_runtime_create(json_data, params_data, params_size, NULL);
 }
 
 static size_t GetTensorSize(const DLTensor *t)

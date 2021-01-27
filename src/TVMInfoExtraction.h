@@ -42,7 +42,7 @@ typedef struct Graph_Info
 #ifdef __cplusplus
 
 extern "C" {
-void *create_tvm_rt(const char *json_data);
+void *create_tvm_rt(const char *json_data, const char *params_data, uint64_t params_size);
 Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t params_size);
 }
 
