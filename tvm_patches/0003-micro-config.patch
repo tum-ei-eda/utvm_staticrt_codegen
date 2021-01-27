@@ -1,0 +1,34 @@
+From 5133d8191cd8c4e4b4c713891287db9811fab8a6 Mon Sep 17 00:00:00 2001
+From: Rafael Stahl <r.stahl@tum.de>
+Date: Wed, 27 Jan 2021 14:07:07 +0100
+Subject: [PATCH 3/3] micro config
+
+---
+ cmake/config.cmake | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/cmake/config.cmake b/cmake/config.cmake
+index 872feb918..3dde2e0e6 100644
+--- a/cmake/config.cmake
++++ b/cmake/config.cmake
+@@ -85,7 +85,7 @@ set(USE_VULKAN OFF)
+ set(USE_OPENGL OFF)
+ 
+ # Whether enable MicroTVM runtime
+-set(USE_MICRO OFF)
++set(USE_MICRO ON)
+ 
+ # Whether enable RPC runtime
+ set(USE_RPC ON)
+@@ -106,7 +106,7 @@ set(USE_GRAPH_RUNTIME_DEBUG OFF)
+ set(USE_VM_PROFILER OFF)
+ 
+ # Whether enable uTVM standalone runtime
+-set(USE_MICRO_STANDALONE_RUNTIME OFF)
++set(USE_MICRO_STANDALONE_RUNTIME ON)
+ 
+ # Whether build with LLVM support
+ # Requires LLVM version >= 4.0
+-- 
+2.17.1
+
