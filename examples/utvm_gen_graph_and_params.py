@@ -4,7 +4,6 @@ import logging
 import shutil
 
 import numpy as np
-from matplotlib import pyplot as plt
 
 import tvm
 import tvm.micro
