@@ -21,6 +21,8 @@ jobs:
         cd ..
         git clone --recursive https://github.com/apache/tvm.git
         cd tvm
+        git config --global user.email "you@example.com"
+        git config --global user.name "Your Name"
         git am ../utvm_staticrt_codegen/tvm_patches/*.patch
         mkdir build
         cp cmake/config.cmake build
