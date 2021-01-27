@@ -30,8 +30,6 @@ jobs:
         cmake ..
         cmake --build .
         cd ..
-        export TVM_HOME=$(pwd)
-        export PYTHONPATH=$TVM_HOME/python:${PYTHONPATH}
 
     - name: Build
       shell: bash
@@ -44,5 +42,6 @@ jobs:
     - name: Test
       shell: bash
       run: |
+        export PYTHONPATH=../tvm/python:${PYTHONPATH}
         cd examples
         ./run_flow.sh
