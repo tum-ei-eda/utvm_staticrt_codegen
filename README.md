@@ -25,18 +25,18 @@ The generator is a conventional CMake project.
 
 ## Usage
 
-Point python to the TVM installation:
+- Point python to the TVM installation:
 
-    export PYTHONPATH=../tvm/python:${PYTHONPATH}
+      export PYTHONPATH=../tvm/python:${PYTHONPATH}
 
-Generate a `graph.json`, `params.bin` and `kernels.c` file for your model with µTVM. A complete example is shown in [this µTVM example script](examples/utvm_gen_graph_and_params.py).
+- Generate a `graph.json`, `params.bin` and `kernels.c` file for your model with µTVM. A complete example is shown in [this µTVM example script](examples/utvm_gen_graph_and_params.py).
 
-Inspect `kernels.c` and determine the required workspace size by looking at the `TVMBackendAllocWorkspace` calls and picking the largest used byte size. If there are no calls, the size should be zero.
+- Inspect `kernels.c` and determine the required workspace size by looking at the `TVMBackendAllocWorkspace` calls and picking the largest used byte size. If there are no calls, the size should be zero.
 
-Execute the µTVM StaticRT CodeGen:
+- Execute the µTVM StaticRT CodeGen:
 
-    ./utvm_staticrt_codegen graph.json params.bin staticrt.c $WORKSPACE_SIZE
+      ./utvm_staticrt_codegen graph.json params.bin staticrt.c $WORKSPACE_SIZE
 
-Now the `kernels.c` and `staticrt.c` can be compiled together with some calling code into a complete application. An example is given in `examples/target_src/`.
+- Now the `kernels.c` and `staticrt.c` can be compiled together with some calling code into a complete application. An example is given in `examples/target_src/`.
 
 For detailed commands see [example full flow script](examples/run_flow.sh).

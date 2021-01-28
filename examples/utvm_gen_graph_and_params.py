@@ -24,15 +24,19 @@ class TensorInfo:
         self.name = t.Name().decode()
 
         typeLookup = {
-            TType.FLOAT32: "float32",
-            TType.UINT8: "uint8",
-            TType.INT8: "int8"
+            TType.FLOAT32: (4, "float32"),
+            TType.UINT8: (1, "uint8"),
+            TType.INT8: (1, "int8")
         }
-        self.ty = typeLookup[t.Type()]
+        self.tysz, self.ty = typeLookup[t.Type()]
         assert self.ty != ""
 
         shape = tuple([t.Shape(si) for si in range(0, t.ShapeLength())])
         self.shape = shape
+
+        self.size = self.tysz
+        for dimSz in self.shape:
+            self.size *= dimSz
 
 
 class ModelInfo:
@@ -103,6 +107,7 @@ class TVMFlow:
             outDir = "out"
             os.makedirs(outDir, exist_ok=True)
             shutil.copy2(self.workspace.path + "/src/module/lib1.c", outDir + "/kernels.c")
+            shutil.copy2(self.workspace.path + "/src/module/lib0.c", outDir + "/syslib.c")
             with open(outDir + "/graph.json", "w") as f:
                 f.write(self.graph)
             with open(outDir + "/params.bin", "wb") as f:

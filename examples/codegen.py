@@ -46,6 +46,13 @@ def getMeta(tensors, withNames=False):
         out += "shape_" + str(i) + ", "
     out += "};\n"
 
+    for i, t in enumerate(tensors):
+        out += "    static uint8_t data_" + str(i) + "[" + str(t.size) + "];\n"
+    out += "    uint8_t *data[] = { "
+    for i, t in enumerate(tensors):
+        out += "data_" + str(i) + ", "
+    out += "};\n"
+
     return out
 
 
@@ -74,12 +81,12 @@ void TVMWrap_Init()
     g_handle = tvm_runtime_create(g_graph, g_params, g_params_size, NULL);
 }
 
-void TVMWrap_SetInput(int index, const void *inData)
+void *TVMWrap_GetInputPtr(int index)
 {
     ${inMeta}
 
     DLTensor input;
-    input.data = (void*)inData;
+    input.data = (void*)data[index];
     DLContext ctx = {kDLCPU, 0};
     input.ctx = ctx;
     input.ndim = ${inNDims};
@@ -89,6 +96,8 @@ void TVMWrap_SetInput(int index, const void *inData)
     input.byte_offset = 0;
 
     tvm_runtime_set_input(g_handle, names[index], &input);
+
+    return data[index];
 }
 
 void TVMWrap_Run()
@@ -96,12 +105,12 @@ void TVMWrap_Run()
     tvm_runtime_run(g_handle);
 }
 
-void TVMWrap_GetOutput(int index, void *outData)
+void *TVMWrap_GetOutputPtr(int index)
 {
     ${outMeta}
 
     DLTensor output;
-    output.data = outData;
+    output.data = (void*)data[index];
     DLContext ctx = {kDLCPU, 0};
     output.ctx = ctx;
     output.ndim = ${outNDims};
@@ -111,6 +120,8 @@ void TVMWrap_GetOutput(int index, void *outData)
     output.byte_offset = 0;
 
     tvm_runtime_get_output(g_handle, index, &output);
+
+    return data[index];
 }
 '''
         f.write(fill(mainCode, inMeta=getMeta(modelInfo.inTensors, True), outMeta=getMeta(modelInfo.outTensors), inNDims=2, outNDims=2))
