@@ -1,6 +1,6 @@
 # µTVM StaticRT CodeGen
 
-This project contains a code generator that produces a replacement for other µTVM runtimes. This runtime statically executes a compiled model which reduces the overhead of having such a runtime in terms of code size and execution time.
+This project contains a code generator that produces static C NN inference deployment code targeting tiny micro-controllers (TinyML) as replacement for other µTVM runtimes. This tools generates a runtime, which statically executes the compiled model.  This reduces the overhead in terms of code size and execution time compared to having a dynmaic on-device runtime.
 
 ![Tool flow](doc/flow.png)
 
