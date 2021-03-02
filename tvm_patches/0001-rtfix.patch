@@ -17,7 +17,7 @@ index 9656b07a7..35a1baa3f 100644
    err = TVMPlatformMemoryAllocate(nbytes, ctx, &ptr);
    CHECK_EQ(err, kTvmErrorNoError,
 -           "TVMBackendAllocWorkspace(%d, %d, %" PRIu64 ", %d, %d) -> %" PRId32, device_type,
-+           "TVMBackendAllocWorkspace(%d, %d, %" PRIu64 ", %d, %d) -> %" "i", device_type,
++           "TVMBackendAllocWorkspace(%d, %d, %" "lli" ", %d, %d) -> %" "i", device_type,
             device_id, nbytes, dtype_code_hint, dtype_bits_hint, err);
    return ptr;
  }
@@ -33,7 +33,7 @@ index bf36deacb..3b3f33490 100644
 +  //fsync(STDOUT_FILENO);
    return to_return;
  }
- 
+
 @@ -102,7 +102,7 @@ tvm_crt_error_t TVMPlatformGenerateRandom(uint8_t* buffer, size_t num_bytes) {
      random_seed = (unsigned int)time(NULL);
    }
@@ -42,9 +42,9 @@ index bf36deacb..3b3f33490 100644
 +    int random = rand();
      buffer[i] = (uint8_t)random;
    }
- 
+
 @@ -116,7 +116,7 @@ static char** g_argv = NULL;
- 
+
  int testonly_reset_server(TVMValue* args, int* type_codes, int num_args, TVMValue* out_ret_value,
                            int* out_ret_tcode, void* resource_handle) {
 -  execvp(g_argv[0], g_argv);
@@ -52,6 +52,6 @@ index bf36deacb..3b3f33490 100644
    perror("utvm runtime: error restarting");
    return -1;
  }
--- 
+--
 2.17.1
 
