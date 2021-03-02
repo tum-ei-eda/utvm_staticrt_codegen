@@ -99,9 +99,15 @@ class TVMFlow:
         if not self.local:
             # Cross compile
             self.workspace = tvm.micro.Workspace(debug=True)
-            opts = tvm.micro.default_options(os.path.join(tvm.micro.CRT_ROOT_DIR, "host"))
+            opts = tvm.micro.default_options(os.path.join(tvm.micro.get_standalone_crt_dir(), "template", "host"))
             self.compiler = compiler_ext.Compiler_Ext(target=self.target)
-            self.micro_binary = tvm.micro.build_static_runtime(self.workspace, self.compiler, c_mod, lib_opts=opts["bin_opts"], bin_opts=opts["bin_opts"])
+            self.micro_binary = tvm.micro.build_static_runtime(
+                self.workspace,
+                self.compiler,
+                c_mod,
+                opts,
+                extra_libs=[tvm.micro.get_standalone_crt_lib("memory")]
+            )
 
             # Prepare target data
             outDir = "out"
