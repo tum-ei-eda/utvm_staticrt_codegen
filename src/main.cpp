@@ -43,5 +43,7 @@ int main(int argc, char *argv[])
     CodeGenerator cg(gi);
     cg.generateCode(argv[3], workspaceSize);
 
+    free_graph_info(gi);
+
     return 0;
 }

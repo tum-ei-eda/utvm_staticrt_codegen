@@ -42,14 +42,16 @@ static uint32_t *GetStaticInputEIDs(size_t *numReturned, TVMGraphRuntime *g, con
     p += sizeof(uint64_t);
 
     // Names
-    uint64_t numNames = *(uint64_t*)p;
+    uint64_t numNames;
+    memcpy(&numNames, p, sizeof(numNames));
     p += sizeof(numNames);
     char **names = malloc(numNames * sizeof(char*));
     uint32_t *out = malloc(numNames * sizeof(uint32_t));
     for (int i = 0; i < numNames; i++)
     {
         // Name length
-        uint64_t nameLen = *(uint64_t*)p;
+        uint64_t nameLen;
+        memcpy(&nameLen, p, sizeof(nameLen));
         p += sizeof(nameLen);
 
         names[i] = malloc((nameLen + 1) * sizeof(char));
@@ -203,4 +205,22 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
     free(staticInputEIDs);
 
     return gi;
+}
+
+void free_graph_info(Graph_Info *gi)
+{
+    free(gi->outputs);
+    free(gi->inputs);
+    for (int i = 0; i < gi->numStorages; i++) {
+        free(gi->storages[i]->static_data);
+        free(gi->storages[i]);
+    }
+    free(gi->storages);
+    for (int i = 0; i < gi->numOps; i++) {
+        if (gi->ops[i].active) {
+            free(gi->ops[i].args);
+        }
+    }
+    free(gi->ops);
+    free(gi);
 }

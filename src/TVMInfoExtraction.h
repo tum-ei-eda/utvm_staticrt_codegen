@@ -44,6 +44,7 @@ typedef struct Graph_Info
 extern "C" {
 void *create_tvm_rt(const char *json_data, const char *params_data, uint64_t params_size);
 Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t params_size);
+void free_graph_info(Graph_Info *gi);
 }
 
 #endif

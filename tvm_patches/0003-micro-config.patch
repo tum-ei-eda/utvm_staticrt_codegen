@@ -20,8 +20,8 @@ index 872feb918..3dde2e0e6 100644
  
  # Whether enable RPC runtime
  set(USE_RPC ON)
-@@ -106,7 +106,7 @@ set(USE_GRAPH_RUNTIME_DEBUG OFF)
- set(USE_VM_PROFILER OFF)
+@@ -103,7 +103,7 @@ set(USE_GRAPH_RUNTIME_DEBUG OFF)
+ set(USE_PROFILER ON)
  
  # Whether enable uTVM standalone runtime
 -set(USE_MICRO_STANDALONE_RUNTIME OFF)
