@@ -62,7 +62,7 @@ class TVMFlow:
         if self.local:
             self.target = "llvm"
         else:
-            self.target = tvm.target.Target("c -mcpu=armv6-m -runtime=c --system-lib -model=unknown")
+            self.target = tvm.target.target.micro("host")
 
 
     def loadModel(self, path):
