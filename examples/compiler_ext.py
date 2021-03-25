@@ -3,9 +3,9 @@ import tvm.micro
 
 
 def targetIsARM(target):
-    return target.attrs["mcpu"] == "armv6-m"
+    return "mcpu" in target.attrs and target.attrs["mcpu"] == "armv6-m"
 def targetIsRISCV(target):
-    return target.attrs["mcpu"] == "rv32gc"
+    return "mcpu" in target.attrs and target.attrs["mcpu"] == "rv32gc"
 
 
 class Compiler_Ext(tvm.micro.DefaultCompiler):
