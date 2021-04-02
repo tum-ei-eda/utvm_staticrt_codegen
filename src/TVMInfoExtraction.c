@@ -1,6 +1,6 @@
 #include "TVMInfoExtraction.h"
 
-#include "tvm/runtime/crt/internal/graph_runtime/graph_runtime.h"
+#include "tvm/runtime/crt/internal/graph_executor/graph_executor.h"
 #include "tvm/runtime/crt/crt.h"
 #include "tvm/runtime/crt/packed_func.h"
 #include "tvm/runtime/crt/memory.h"
@@ -17,7 +17,7 @@ TVMModuleHandle TVMArgs_AsModuleHandle(const TVMArgs* args, size_t index);
 
 void *create_tvm_rt(const char *json_data, const char *params_data, uint64_t params_size)
 {
-    return (TVMGraphRuntime*)tvm_runtime_create(json_data, params_data, params_size, NULL);
+    return (TVMGraphExecutor*)tvm_runtime_create(json_data, params_data, params_size, NULL);
 }
 
 static size_t GetTensorSize(const DLTensor *t)
@@ -29,10 +29,10 @@ static size_t GetTensorSize(const DLTensor *t)
     sz *= (t->dtype.bits * t->dtype.lanes + 7) / 8;
     return sz;
 }
-uint32_t TVMGraphRuntime_GetEntryId(TVMGraphRuntime *, uint32_t, uint32_t);
+uint32_t TVMGraphExecutor_GetEntryId(TVMGraphExecutor *, uint32_t, uint32_t);
 
-// See: TVMGraphRuntime_LoadParams
-static uint32_t *GetStaticInputEIDs(size_t *numReturned, TVMGraphRuntime *g, const char *params_data, uint64_t params_size)
+// See: TVMGraphExecutor_LoadParams
+static uint32_t *GetStaticInputEIDs(size_t *numReturned, TVMGraphExecutor *g, const char *params_data, uint64_t params_size)
 {
     const uint8_t *p = params_data;
 
@@ -59,8 +59,8 @@ static uint32_t *GetStaticInputEIDs(size_t *numReturned, TVMGraphRuntime *g, con
         names[i][nameLen] = '\0';
         p += nameLen;
 
-        int32_t inIndex = TVMGraphRuntime_GetInputIndex(g, names[i]);
-        out[i] = TVMGraphRuntime_GetEntryId(g, g->input_nodes[inIndex], 0);
+        int32_t inIndex = TVMGraphExecutor_GetInputIndex(g, names[i]);
+        out[i] = TVMGraphExecutor_GetEntryId(g, g->input_nodes[inIndex], 0);
 
         free(names[i]);
     }
@@ -107,14 +107,14 @@ static Storage_Info *GetOrAddStorage(Graph_Info *gi, void *p, size_t sz, bool co
 
 Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t params_size)
 {
-    TVMGraphRuntime *g = grt;
+    TVMGraphExecutor *g = grt;
 
     assert(g->nodes_count == g->op_execs_count);
 
     TVMByteArray params;
     params.data = params_data;
     params.size = params_size;
-    TVMGraphRuntime_LoadParams(g, params.data, params.size);
+    TVMGraphExecutor_LoadParams(g, params.data, params.size);
 
     size_t numStaticInputEIDs;
     uint32_t *staticInputEIDs = GetStaticInputEIDs(&numStaticInputEIDs, g, params.data, params.size);
@@ -133,7 +133,7 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
     gi->ops = malloc(g->nodes_count * sizeof(Op_Info));
     for (int i = 0; i < g->nodes_count; i++)
     {
-        // See: TVMGraphRuntime_Run
+        // See: TVMGraphExecutor_Run
         if (g->op_execs[i].fexec) {
             printf("op[%i]: %s\n", i, g->nodes[i].param.func_name);
 
@@ -146,10 +146,10 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
             gi->ops[i].args = malloc(numArgs * sizeof(Arg_Info));
             uint32_t *eids = malloc(numArgs * sizeof(uint32_t));
             for (int j = 0; j < g->nodes[i].inputs_count; j++) {
-                eids[j] = TVMGraphRuntime_GetEntryId(g, g->nodes[i].inputs[j].node_id, g->nodes[i].inputs[j].index);
+                eids[j] = TVMGraphExecutor_GetEntryId(g, g->nodes[i].inputs[j].node_id, g->nodes[i].inputs[j].index);
             }
             for (int j = 0; j < g->nodes[i].param.num_outputs; j++) {
-                eids[j + g->nodes[i].inputs_count] = TVMGraphRuntime_GetEntryId(g, i, j);
+                eids[j + g->nodes[i].inputs_count] = TVMGraphExecutor_GetEntryId(g, i, j);
             }
             for (int j = 0; j < numArgs; j++) {
                 Arg_Info *arg = &gi->ops[i].args[j];
@@ -182,14 +182,14 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
                         // Do not consider statically assigned args as input.
                         continue;
                     }
-                    if (eids[j] == TVMGraphRuntime_GetEntryId(g, g->input_nodes[k], 0)) {
+                    if (eids[j] == TVMGraphExecutor_GetEntryId(g, g->input_nodes[k], 0)) {
                         gi->numInputs++;
                         gi->inputs = realloc(gi->inputs, gi->numInputs * sizeof(Arg_Info*));
                         gi->inputs[gi->numInputs - 1] = arg;
                     }
                 }
                 for (int k = 0; k < g->outputs_count; k++) {
-                    if (eids[j] == TVMGraphRuntime_GetEntryId(g, g->outputs[k].node_id, g->outputs[k].index)) {
+                    if (eids[j] == TVMGraphExecutor_GetEntryId(g, g->outputs[k].node_id, g->outputs[k].index)) {
                         gi->numOutputs++;
                         gi->outputs = realloc(gi->outputs, gi->numOutputs * sizeof(Arg_Info*));
                         gi->outputs[gi->numOutputs - 1] = arg;
