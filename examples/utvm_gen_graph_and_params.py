@@ -94,7 +94,9 @@ class TVMFlow:
             cfg = { "tir.disable_vectorize": True }
 
         with tvm.transform.PassContext(opt_level=self.opt_level, config=cfg):
-            self.graph, c_mod, self.c_params = relay.build(self.mod, self.target, params=self.params)
+            c_mod = relay.build(self.mod, target=self.target, params=self.params)
+            self.graph = c_mod.get_json()
+            self.c_params = c_mod.get_params()
 
         if not self.local:
             # Cross compile
