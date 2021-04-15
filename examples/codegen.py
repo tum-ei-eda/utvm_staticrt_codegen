@@ -87,8 +87,8 @@ void *TVMWrap_GetInputPtr(int index)
 
     DLTensor input;
     input.data = (void*)data[index];
-    DLContext ctx = {kDLCPU, 0};
-    input.ctx = ctx;
+    DLDevice device = {kDLCPU, 0};
+    input.device = device;
     input.ndim = ${inNDims};
     input.dtype = dtypes[index];
     input.shape = shapes[index];
@@ -111,8 +111,8 @@ void *TVMWrap_GetOutputPtr(int index)
 
     DLTensor output;
     output.data = (void*)data[index];
-    DLContext ctx = {kDLCPU, 0};
-    output.ctx = ctx;
+    DLDevice device = {kDLCPU, 0};
+    output.device = device;
     output.ndim = ${outNDims};
     output.dtype = dtypes[index];
     output.shape = shapes[index];
