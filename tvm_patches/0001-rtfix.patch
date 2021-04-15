@@ -9,19 +9,6 @@ Missed changes from tvm patches
  src/runtime/crt/host/main.cc             | 6 +++---
  2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/src/runtime/crt/common/crt_backend_api.c b/src/runtime/crt/common/crt_backend_api.c
-index 9a12bc282..233711fc4 100644
---- a/src/runtime/crt/common/crt_backend_api.c
-+++ b/src/runtime/crt/common/crt_backend_api.c
-@@ -40,7 +40,7 @@ void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes,
-   assert(nbytes > 0);
-   err = TVMPlatformMemoryAllocate(nbytes, dev, &ptr);
-   CHECK_EQ(err, kTvmErrorNoError,
--           "TVMBackendAllocWorkspace(%d, %d, %" PRIu64 ", %d, %d) -> %" PRId32, device_type,
-+           "TVMBackendAllocWorkspace(%d, %d, %" "lli" ", %d, %d) -> %" "i", device_type,
-            device_id, nbytes, dtype_code_hint, dtype_bits_hint, err);
-   return ptr;
- }
 diff --git a/src/runtime/crt/host/main.cc b/src/runtime/crt/host/main.cc
 index e64455417..9e431a96b 100644
 --- a/src/runtime/crt/host/main.cc
