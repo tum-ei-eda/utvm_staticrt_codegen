@@ -1,0 +1,7 @@
+numpy
+decorator
+attrs
+psutil
+scipy
+pytest
+tflite
