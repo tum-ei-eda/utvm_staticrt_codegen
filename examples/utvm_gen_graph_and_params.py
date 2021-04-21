@@ -26,7 +26,8 @@ class TensorInfo:
         typeLookup = {
             TType.FLOAT32: (4, "float32"),
             TType.UINT8: (1, "uint8"),
-            TType.INT8: (1, "int8")
+            TType.INT8: (1, "int8"),
+            TType.INT32: (4, "int32")
         }
         self.tysz, self.ty = typeLookup[t.Type()]
         assert self.ty != ""

@@ -31,6 +31,8 @@ def getMeta(tensors, withNames=False):
             out += "{kDLUInt, 8, 1}"
         elif t.ty == "int8":
             out += "{kDLInt, 8, 1}"
+        elif t.ty == "int32":
+            out += "{kDLInt, 32, 1}"
         else:
             raise "Invalid type"
         out += ", "
