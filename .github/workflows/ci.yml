@@ -24,9 +24,7 @@ jobs:
         mv clang+llvm-11.1.0-x86_64-linux-gnu-ubuntu-16.04 llvm
         git clone --recursive https://github.com/apache/tvm.git
         cd tvm
-        git config --global user.email "you@example.com"
-        git config --global user.name "Your Name"
-        git am ../utvm_staticrt_codegen/tvm_patches/*.patch
+        git apply ../utvm_staticrt_codegen/tvm_patches/*.patch
         mkdir build
         cp cmake/config.cmake build
         cd build
