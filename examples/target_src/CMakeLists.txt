@@ -3,6 +3,9 @@ PROJECT(example_target_src)
 
 INCLUDE(../../cmake/LinkTVM.cmake)
 
+# Enable DBGPRINTF() in DEBUG mode (`cmake -DCMAKE_BUILD_TYPE=Debug ..`)
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
+SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 
 ADD_EXECUTABLE(${PROJECT_NAME}
     main.c
