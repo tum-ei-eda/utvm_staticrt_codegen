@@ -1,12 +1,3 @@
-From daa00ee571c2117dc3558ac51ede2fbf87137e91 Mon Sep 17 00:00:00 2001
-From: Rafael Stahl <r.stahl@tum.de>
-Date: Sun, 14 Mar 2021 15:23:01 +0100
-Subject: [PATCH 3/3] c codegen: support tir.round
-
----
- src/target/source/codegen_c.cc | 4 ++++
- 1 file changed, 4 insertions(+)
-
 diff --git a/src/target/source/codegen_c.cc b/src/target/source/codegen_c.cc
 index 5eaf1e890..30584d9ac 100644
 --- a/src/target/source/codegen_c.cc
@@ -22,6 +13,3 @@ index 5eaf1e890..30584d9ac 100644
      } else {
        LOG(FATAL) << "Unresolved call " << op->op;
      }
--- 
-2.25.1
-
