@@ -1,12 +1,3 @@
-From 1bd9be7d24cd4d576a204f5985cfa2dfde780c41 Mon Sep 17 00:00:00 2001
-From: Rafael Stahl <r.stahl@tum.de>
-Date: Wed, 27 Jan 2021 14:07:07 +0100
-Subject: [PATCH 2/3] micro config
-
----
- cmake/config.cmake | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
 diff --git a/cmake/config.cmake b/cmake/config.cmake
 index 7b29df648..40cc5b4eb 100644
 --- a/cmake/config.cmake
@@ -29,6 +20,3 @@ index 7b29df648..40cc5b4eb 100644
  
  # Whether build with LLVM support
  # Requires LLVM version >= 4.0
--- 
-2.25.1
-
