@@ -119,11 +119,11 @@ void TVMWrap_Init()
     for (auto &arg : m_inArgs) {
         out << "{&g_storage_" << arg->storageIndex << "[" << arg->offset << "]," << arg->sz << "}, ";
     }
-    out << "static const ArgInfo outArgInfo[] = {";
+    out << "};\nstatic const ArgInfo outArgInfo[] = {";
     for (auto &arg : m_outArgs) {
         out << "{&g_storage_" << arg->storageIndex << "[" << arg->offset << "]," << arg->sz << "}, ";
     }
-    out << R"CODE(
+    out << R"CODE(};
 void *TVMWrap_GetInputPtr(int index)
 {
   return inArgInfo[index].buffer;
