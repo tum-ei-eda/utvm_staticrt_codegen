@@ -114,24 +114,32 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
 void TVMWrap_Init()
 {
 }
-void *TVMWrap_GetInputPtr(int index)
-{
 )CODE";
-    out << "  static const ArgInfo inArgInfo[] = {";
+    out << "static const ArgInfo inArgInfo[] = {";
     for (auto &arg : m_inArgs) {
         out << "{&g_storage_" << arg->storageIndex << "[" << arg->offset << "]," << arg->sz << "}, ";
     }
-    out << "};\n  return inArgInfo[index].buffer;\n";
-    out << R"CODE(}
-void *TVMWrap_GetOutputPtr(int index)
-{
-)CODE";
-    out << "  static const ArgInfo outArgInfo[] = {";
+    out << "static const ArgInfo outArgInfo[] = {";
     for (auto &arg : m_outArgs) {
         out << "{&g_storage_" << arg->storageIndex << "[" << arg->offset << "]," << arg->sz << "}, ";
     }
-    out << "};\n  return outArgInfo[index].buffer;\n";
-    out << R"CODE(}
+    out << R"CODE(
+void *TVMWrap_GetInputPtr(int index)
+{
+  return inArgInfo[index].buffer;
+}
+size_t TVMWrap_GetInputSize(int index)
+{
+  return inArgInfo[index].size;
+}
+void *TVMWrap_GetOutputPtr(int index)
+{
+  return outArgInfo[index].buffer;
+}
+size_t TVMWrap_GetOutputSize(int index)
+{
+  return outArgInfo[index].size;
+}
 
 void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, int dtype_code_hint,
                                int dtype_bits_hint) {
@@ -147,5 +155,23 @@ void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, 
 int TVMBackendFreeWorkspace(int device_type, int device_id, void* ptr) {
   return 0;
 }
+)CODE";
+
+    std::ofstream outH(outFileName + ".h");
+    outH << R"CODE(
+#ifndef UTVM_STATICRT_CODEGEN_H
+#define UTVM_STATICRT_CODEGEN_H
+
+#include <stddef.h>
+
+
+void TVMWrap_Init();
+void *TVMWrap_GetInputPtr(int index);
+size_t TVMWrap_GetInputSize(int index);
+void TVMWrap_Run();
+void *TVMWrap_GetOutputPtr(int index);
+size_t TVMWrap_GetOutputSize(int index);
+
+#endif
 )CODE";
 }
