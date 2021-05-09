@@ -23,9 +23,11 @@ def get_custom_convert_map(model):
 
     def convert_tflite_custom(self, op, builtin=False):
         """Convert TFLite custom op"""
+        print("convert_tflite_custom")
 
         input_tensors = self.get_input_tensors(op)
         inputs = [ self.get_expr(input_tensor.tensor_idx) for input_tensor in input_tensors]
+        #inputs = [ relay.annotation.compiler_begin(self.get_expr(input_tensor.tensor_idx), "tflitecompiler") for input_tensor in input_tensors]
 
         output_tensors = self.get_output_tensors(op)
         #outputs = [ self.get_expr(output_tensor.tensor_idx) for output_tensor in output_tensors]
@@ -60,9 +62,12 @@ def get_custom_convert_map(model):
             # out = _op.tflite_extern(inputs, name=custom_op_code_str, options=list(flexbuffer), out_dtype="float32")
             raise NotImplementedError
 
+        #out = relay.annotation.compiler_end(out, "tflitecompiler")
         return out
 
     def convert_add_wrapper(self, op):
+        print("ADD")
+
         replace_with_tflite_op = False
         if replace_with_tflite_op:
             return convert_tflite_custom(self, op, builtin=True)
@@ -70,6 +75,7 @@ def get_custom_convert_map(model):
             return self.convert_add(op)
 
     def convert_fully_connected_wrapper(self, op):
+        print("FULLY_CONNECTED")
         replace_with_tflite_op = False
         if replace_with_tflite_op:
             return convert_tflite_custom(self, op, builtin=True)
@@ -77,6 +83,8 @@ def get_custom_convert_map(model):
             return self.convert_fully_connected(op)
 
     def convert_conv2d_wrapper(self, op):
+        print("CONV_2D")
+
         def use_tflite(op):
             try:
                 from tflite.BuiltinOptions import BuiltinOptions
