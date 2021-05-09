@@ -1,0 +1,13 @@
+diff --git a/cmake/config.cmake b/cmake/config.cmake
+index 7b29df648..7a8a4f936 100644
+--- a/cmake/config.cmake
++++ b/cmake/config.cmake
+@@ -246,7 +246,7 @@ set(USE_VERILATOR OFF)
+ set(USE_ANTLR OFF)
+ 
+ # Whether use Relay debug mode
+-set(USE_RELAY_DEBUG OFF)
++set(USE_RELAY_DEBUG ON)
+ 
+ # Whether to build fast VTA simulator driver
+ set(USE_VTA_FSIM OFF)
