@@ -259,12 +259,9 @@ class TVMFlow:
             shutil.copy2(self.workspace.path + "/src/module/lib1.c", outDir + "/kernels.c")
             shutil.copy2(self.workspace.path + "/src/module/lib0.c", outDir + "/syslib.c")
             try_index = 2;
-            print(self.workspace.path + f"/src/module/lib{try_index}.c")
-            print(os.path.isfile(self.workspace.path + f"/src/module/lib{try_index}.c"))
             while os.path.isfile(self.workspace.path + f"/src/module/lib{try_index}.c"):
                 shutil.copy2(self.workspace.path + f"/src/module/lib{try_index}.c", outDir + f"/kernels{try_index}.c")
                 try_index = try_index + 1
-            input(self.workspace.path)
             with open(outDir + "/graph.json", "w") as f:
                 f.write(self.graph)
             with open(outDir + "/params.bin", "wb") as f:
