@@ -18,6 +18,137 @@ from tflite.TensorType import TensorType as TType
 import compiler_ext
 import codegen
 
+from tvm.relay.frontend.tflite import OperatorConverter
+def get_custom_convert_map(model):
+
+    def convert_tflite_custom(self, op, builtin=False):
+        """Convert TFLite custom op"""
+
+        input_tensors = self.get_input_tensors(op)
+        inputs = [ self.get_expr(input_tensor.tensor_idx) for input_tensor in input_tensors]
+
+        output_tensors = self.get_output_tensors(op)
+        #outputs = [ self.get_expr(output_tensor.tensor_idx) for output_tensor in output_tensors]
+
+        try:
+            from tflite.TensorType import TensorType
+        except ImportError:
+            raise ImportError("The tflite package must be installed")
+
+        op_code = model.OperatorCodes(op.OpcodeIndex())
+        if builtin:
+            from tflite.BuiltinOptions import BuiltinOptions
+            from tflite.BuiltinOperator import BuiltinOperator
+            if op_code.BuiltinCode() == BuiltinOperator.FULLY_CONNECTED:
+                from tflite.FullyConnectedOptions import FullyConnectedOptions
+                out = self.convert_fully_connected(op)
+            elif op_code.BuiltinCode() == BuiltinOperator.ADD:
+                from tflite.AddOptions import AddOptions
+                out = self.convert_add(op)
+            elif op_code.BuiltinCode() == BuiltinOperator.CONV_2D:
+                from tflite.Conv2DOptions import Conv2DOptions
+                out = self.convert_conv2d(op)
+            else:
+                raise NotImplementedError
+        else:
+            from tflite.CustomOptions import CustomOptions
+            assert(op_code.BuiltinCode() != tflite.BuiltinOperator.CUSTOM)
+            flexbuffer = op.CustomOptionsAsNumpy().tobytes()
+            op_code_list_idx = op.OpcodeIndex()
+            custom_op_code_str = self.model.OperatorCodes(op_code_list_idx).CustomCode().decode('utf-8')
+            print("CUSTOM:", custom_op_code_str)
+            # out = _op.tflite_extern(inputs, name=custom_op_code_str, options=list(flexbuffer), out_dtype="float32")
+            raise NotImplementedError
+
+        return out
+
+    def convert_add_wrapper(self, op):
+        replace_with_tflite_op = False
+        if replace_with_tflite_op:
+            return convert_tflite_custom(self, op, builtin=True)
+        else:
+            return self.convert_add(op)
+
+    def convert_fully_connected_wrapper(self, op):
+        replace_with_tflite_op = False
+        if replace_with_tflite_op:
+            return convert_tflite_custom(self, op, builtin=True)
+        else:
+            return self.convert_fully_connected(op)
+
+    def convert_conv2d_wrapper(self, op):
+        def use_tflite(op):
+            try:
+                from tflite.BuiltinOptions import BuiltinOptions
+                from tflite.TensorType import TensorType
+                from tflite.Conv2DOptions import Conv2DOptions
+                from tflite.DepthwiseConv2DOptions import DepthwiseConv2DOptions
+                from tflite.Padding import Padding
+            except ImportError:
+                raise ImportError("The tflite package must be installed")
+            input_tensors = self.get_input_tensors(op)
+            output_tensors = self.get_output_tensors(op)
+
+            input_tensor = input_tensors[0]
+            weight_tensor = input_tensors[1]
+            if len(input_tensors) == 3:
+                bias_tensor = input_tensors[2]
+            else:
+                bias_tensor = None
+            output_tensor = output_tensors[0]
+
+            input_tensor_type = input_tensor.tensor.Type()
+            weight_tensor_type = weight_tensor.tensor.Type()
+            output_tensor_type = output_tensor.tensor.Type()
+            if bias_tensor is not None:
+                bias_tensor_type = bias_tensor.tensor.Type()
+
+            op_options = op.BuiltinOptions()
+            conv_options = Conv2DOptions()
+            conv_options.Init(op_options.Bytes, op_options.Pos)
+
+            stride_h = conv_options.StrideH()
+            stride_w = conv_options.StrideW()
+
+            dilation_h = conv_options.DilationHFactor()
+            dilation_w = conv_options.DilationWFactor()
+
+            padding = conv_options.Padding()
+
+            fused_activation_fn = conv_options.FusedActivationFunction()
+
+            _, input_h, input_w, input_c = to_int_list(self.get_tensor_shape(input_tensor))
+            output_channels, kernel_h, kernel_w, _ = to_int_list(
+                self.get_tensor_shape(weight_tensor)
+            )
+
+            dilated_kernel_h = dilation_h * (kernel_h - 1) + 1
+            dilated_kernel_w = dilation_w * (kernel_w - 1) + 1
+
+            if input_tensor.qnn_params:
+                pass
+            if output_tensor.qnn_params:
+                pass
+
+            # Final decision
+            print("types: ", output_tensor_type, bias_tensor_type, weight_tensor_type, TensorType.FLOAT32)
+
+            if output_tensor_type == TensorType.FLOAT32 and weight_tensor_type == TensorType.FLOAT32 and bias_tensor_type == TensorType.FLOAT32:
+                return True
+            else:
+                return False
+
+        replace_with_tflite_op = False
+        if replace_with_tflite_op:
+            return convert_tflite_custom(self, op, builtin=True)
+        else:
+            return self.convert_conv2d(op)
+    return {
+        "ADD": convert_add_wrapper,
+        "FULLY_CONNECTED": convert_fully_connected_wrapper,
+        "CONV_2D": convert_conv2d_wrapper,
+        "CUSTOM": convert_tflite_custom,
+    }
 
 class TensorInfo:
     def __init__(self, t):
@@ -82,7 +213,9 @@ class TVMFlow:
             shapes[t.name] = t.shape
             types[t.name] = t.ty
 
-        self.mod, self.params = relay.frontend.from_tflite(tflModel, shape_dict=shapes, dtype_dict=types)
+        custom_convert_map = get_custom_convert_map(tflModel)
+
+        self.mod, self.params = relay.frontend.from_tflite(tflModel, shape_dict=shapes, dtype_dict=types, custom_convert_map=custom_convert_map)
         self.mod = tvm.relay.transform.PartitionGraph()(self.mod)
 
 
