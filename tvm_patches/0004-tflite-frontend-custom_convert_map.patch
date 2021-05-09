@@ -1,0 +1,66 @@
+diff --git a/python/tvm/relay/frontend/tflite.py b/python/tvm/relay/frontend/tflite.py
+index 6b14a6f58..d49340b85 100644
+--- a/python/tvm/relay/frontend/tflite.py
++++ b/python/tvm/relay/frontend/tflite.py
+@@ -216,6 +216,9 @@ class OperatorConverter(object):
+         if len(raise_msg) > 0:
+             raise tvm.error.OpNotImplemented(raise_msg)
+ 
++    def update_convert_map(self, custom_map):
++        self.convert_map.update(custom_map)
++
+     def convert_op_to_relay(self):
+         """Convert TFLite ops to relay ops"""
+         for op_idx in range(self.subgraph.OperatorsLength()):
+@@ -228,7 +231,11 @@ class OperatorConverter(object):
+                 raise ImportError("The tflite package must be installed")
+ 
+             assert isinstance(op, Operator)
+-            ret = self.convert_map[op_code_str](op)
++            convert_func = self.convert_map[op_code_str]
++            if (hasattr(convert_func, '__self__')):  # is bound method
++                ret = convert_func(op)
++            else:  # is function
++                ret = convert_func(self, op)
+ 
+             # In case the Op can be prefetched, the output can be optimized out
+             if ret is None:
+@@ -266,7 +273,8 @@ class OperatorConverter(object):
+             if custom_op_code_str == b"TFLite_Detection_PostProcess":
+                 return "DETECTION_POSTPROCESS"
+ 
+-            raise NotImplementedError("Custom operators are currently not supported")
++            #raise NotImplementedError("Custom operators are currently not supported")
++            return "CUSTOM"
+         return op_code_str
+ 
+     def get_input_tensors(self, op):
+@@ -3605,8 +3613,7 @@ def _input_type(model):
+ 
+     return shape_dict, dtype_dict
+ 
+-
+-def from_tflite(model, shape_dict=None, dtype_dict=None):
++def from_tflite(model, shape_dict=None, dtype_dict=None, custom_convert_map=None):
+     """Convert from tflite model into compatible relay Function.
+ 
+     Parameters
+@@ -3620,6 +3627,9 @@ def from_tflite(model, shape_dict=None, dtype_dict=None):
+     dtype_dict : dict of str to str
+         Input types of the model.
+ 
++    custom_convert_map : dict of str to relay op
++        A custom op conversion map in the same format as convert_map above
++
+     Returns
+     -------
+     mod : tvm.IRModule
+@@ -3667,6 +3677,8 @@ def from_tflite(model, shape_dict=None, dtype_dict=None):
+ 
+     # op code in model
+     op_converter = OperatorConverter(model, subgraph, exp_tab)
++    if custom_convert_map:
++        op_converter.update_convert_map(custom_convert_map)
+     op_converter.check_unsupported_ops()
+     op_converter.convert_op_to_relay()
+ 
