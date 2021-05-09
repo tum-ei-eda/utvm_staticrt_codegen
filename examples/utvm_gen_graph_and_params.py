@@ -83,6 +83,7 @@ class TVMFlow:
             types[t.name] = t.ty
 
         self.mod, self.params = relay.frontend.from_tflite(tflModel, shape_dict=shapes, dtype_dict=types)
+        self.mod = tvm.relay.transform.PartitionGraph()(self.mod)
 
 
     def build(self):
