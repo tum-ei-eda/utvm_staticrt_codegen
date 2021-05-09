@@ -7,9 +7,13 @@ INCLUDE(../../cmake/LinkTVM.cmake)
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 
+file(GLOB KERNEL_SRCS
+     ../out/kernels*.c
+)
+
 ADD_EXECUTABLE(${PROJECT_NAME}
     main.c
-    ../out/kernels.c
+    ${KERNEL_SRCS}
     ../out/staticrt.c
 )
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC
