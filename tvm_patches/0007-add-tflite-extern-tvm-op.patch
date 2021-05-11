@@ -1,0 +1,300 @@
+diff --git a/include/tvm/relay/attrs/tflite.h b/include/tvm/relay/attrs/tflite.h
+new file mode 100644
+index 000000000..65fcdc44c
+--- /dev/null
++++ b/include/tvm/relay/attrs/tflite.h
+@@ -0,0 +1,56 @@
++/*
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements.  See the NOTICE file
++ * distributed with this work for additional information
++ * regarding copyright ownership.  The ASF licenses this file
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License.  You may obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied.  See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++
++/*!
++ * \file tvm/relay/attrs/nn.h
++ * \brief Auxiliary attributes for nn operators.
++ */
++#ifndef TVM_RELAY_ATTRS_TFLITE_H_
++#define TVM_RELAY_ATTRS_TFLITE_H_
++
++#include <tvm/ir/attrs.h>
++#include <tvm/relay/base.h>
++
++#include <string>
++
++#include "tvm/runtime/container.h"
++
++namespace tvm {
++namespace relay {
++// TODO: HEADER
++
++/*! \brief Attributes for tflite_extern operator */
++struct TfLiteExternAttrs : public tvm::AttrsNode<TfLiteExternAttrs> {
++  tvm::String name;
++  DataType out_dtype;
++  Array<Integer> options;
++  Array<Integer> out_shape;
++
++  TVM_DECLARE_ATTRS(TfLiteExternAttrs, "relay.attrs.TfLiteExternAttrs") {
++    TVM_ATTR_FIELD(name).describe("Custom name");
++    TVM_ATTR_FIELD(out_dtype).describe("Output Datatype");
++    TVM_ATTR_FIELD(options).describe("Custom options");
++    TVM_ATTR_FIELD(out_shape).describe("OutputShape");
++  }
++};
++
++}  // namespace relay
++}  // namespace tvm
++#endif  // TVM_RELAY_ATTRS_NN_H_
++
+diff --git a/python/tvm/relay/op/contrib/__init__.py b/python/tvm/relay/op/contrib/__init__.py
+index 30c2db0dd..33c5f7c38 100644
+--- a/python/tvm/relay/op/contrib/__init__.py
++++ b/python/tvm/relay/op/contrib/__init__.py
+@@ -24,3 +24,4 @@ from .bnns import *
+ from .coreml import *
+ from .ethosn import *
+ from .tensorrt import *
++from .tflite import *
+diff --git a/python/tvm/relay/op/contrib/_make.py b/python/tvm/relay/op/contrib/_make.py
+new file mode 100644
+index 000000000..9d3369ebe
+--- /dev/null
++++ b/python/tvm/relay/op/contrib/_make.py
+@@ -0,0 +1,20 @@
++# Licensed to the Apache Software Foundation (ASF) under one
++# or more contributor license agreements.  See the NOTICE file
++# distributed with this work for additional information
++# regarding copyright ownership.  The ASF licenses this file
++# to you under the Apache License, Version 2.0 (the
++# "License"); you may not use this file except in compliance
++# with the License.  You may obtain a copy of the License at
++#
++#   http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing,
++# software distributed under the License is distributed on an
++# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++# KIND, either express or implied.  See the License for the
++# specific language governing permissions and limitations
++# under the License.
++"""Constructor APIs"""
++import tvm._ffi
++
++tvm._ffi._init_api("relay.op.contrib._make", __name__)
+diff --git a/python/tvm/relay/op/contrib/tflite.py b/python/tvm/relay/op/contrib/tflite.py
+new file mode 100644
+index 000000000..bca936a37
+--- /dev/null
++++ b/python/tvm/relay/op/contrib/tflite.py
+@@ -0,0 +1,108 @@
++# Licensed to the Apache Software Foundation (ASF) under one
++# or more contributor license agreements.  See the NOTICE file
++# distributed with this work for additional information
++# regarding copyright ownership.  The ASF licenses this file
++# to you under the Apache License, Version 2.0 (the
++# "License"); you may not use this file except in compliance
++# with the License.  You may obtain a copy of the License at
++#
++#   http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing,
++# software distributed under the License is distributed on an
++# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++# KIND, either express or implied.  See the License for the
++# specific language governing permissions and limitations
++# under the License.
++"""TfLite codegen supported operators."""
++import tvm.ir
++#from tvm.contrib.target.tflite import _convert_map  # TODO: support tflite as a target
++from ...expr import Constant
++from .. import op as reg
++from .. import strategy
++from tvm.target import generic_func
++from . import _make
++
++
++
++def _register_tflite_op(op_name):
++    """Register a function to check the given operator is supported by TfLite.
++
++    Paramters
++    ---------
++    op_name : Str
++        The name of operator that will be registered.
++
++    """
++
++    def _check_supported(expr):
++        attrs, args = expr.attrs, expr.args
++        #if op_name == "nn.conv2d":
++        #    if not isinstance(args[1], Constant):
++        #        return False
++        #    if attrs["kernel_layout"] not in ["HWIO", "OIHW"]:
++        #        return False
++        # TODO: implement!
++        # return True
++        raise NotImplementedError
++
++    tvm.ir.register_op_attr(op_name, "target.tflitecompiler", _check_supported)
++
++
++# for op in _convert_map:
++#     _register_tflite_op(op)
++
++
++def tflite_extern(inputs, name="UNKNOWN", options=None, out_dtype=None, out_shape=None):
++    """Addition with numpy-style broadcasting.
++    Parameters
++    ----------
++    TODO
++    Returns
++    -------
++    TODO
++    Examples
++    --------
++    TODO
++    """ # TODO: update docstring
++    import numpy as np
++    inputs.append(tvm.relay.Constant(tvm.nd.array(np.array(options, dtype="uint8"))))
++    return _make.tflite_extern(tvm.relay.Tuple(inputs), name, options, out_dtype, out_shape)
++
++from tvm import te, tir, ir, topi
++
++def tflite_extern_topi(data, attrs, out_dtype):
++    inputs = data[:-1]
++    options = data[-1]
++    attrs_dict = { i.name: attrs[i.name] for i in attrs.list_field_info()}
++
++    output_dtype = out_dtype.dtype
++    output_shape = out_dtype.shape
++
++    num_outputs = 1 # TODO!
++
++    outputs = []
++    output_dtypes = []
++    output_shapes = []
++    for i in range(num_outputs):  # Normally there will not be num_outputs > 1 but just in case...
++        outputs.append(te.placeholder(output_shape, name=f'outp{i}', dtype=output_dtype))
++        output_dtypes.append(output_dtype)
++        output_shapes.append(output_shape)
++
++    op_name = attrs_dict['name']
++    is_builtin = False
++    rets = list(te.extern(output_shapes, data, lambda ins, outs: tir.call_packed("tvm.runtime.tflite_extern_wrapper", op_name, int(is_builtin), len(inputs), len(outputs), *ins[:-1], *outs, ins[-1]), name="C", dtype=output_dtypes))
++    return rets[0]
++
++@reg.register_compute("tflite_extern")
++def compute_tflite_extern(attrs, inputs, out_type):
++    args = [inputs, attrs, out_type]
++    return [tflite_extern_topi(*args)]
++
++@generic_func
++def schedule_tflite_extern(attrs, outs, target):
++    """Schedule for tflite_extern"""
++    with target:
++        return topi.generic.default.default_schedule(outs, False)
++
++reg.register_schedule("tflite_extern", schedule_tflite_extern)
+diff --git a/python/tvm/relay/op/op_attrs.py b/python/tvm/relay/op/op_attrs.py
+index 4cc6e0f26..40d0e42ee 100644
+--- a/python/tvm/relay/op/op_attrs.py
++++ b/python/tvm/relay/op/op_attrs.py
+@@ -562,3 +562,9 @@ class BatchToSpaceNDAttrs(Attrs):
+ @tvm._ffi.register_object("relay.attrs.ThreefryGenerateAttrs")
+ class ThreefryGenerateAttrs(Attrs):
+     """Attributes used in ThreefryGenerateAttrs operators"""
++
++
++@tvm._ffi.register_object("relay.attrs.TfLiteExternAttrs")
++class TfLiteExternAttrs(Attrs):
++    """Attributes used in TfLiteExtern operator"""
++
+diff --git a/src/relay/op/contrib/tflite.cc b/src/relay/op/contrib/tflite.cc
+new file mode 100644
+index 000000000..9e7e311a4
+--- /dev/null
++++ b/src/relay/op/contrib/tflite.cc
+@@ -0,0 +1,69 @@
++// TODO: header
++
++#include <tvm/relay/attrs/tflite.h>
++#include <tvm/relay/op.h>
++
++#include <string>
++#include <vector>
++
++#include "../make_op.h"
++#include "../op_common.h"
++#include "../type_relations.h"
++
++namespace tvm {
++namespace relay {
++
++
++TVM_REGISTER_GLOBAL("relay.op.contrib._make.tflite_extern")
++    .set_body_typed([](Expr inputs, String name, Array<Integer> options, DataType out_dtype, Array<Integer> out_shape){
++        auto attrs = make_object<TfLiteExternAttrs>();
++        attrs->name = std::move(name);
++        attrs->options = std::move(options);
++        attrs->out_dtype = out_dtype;
++        attrs->out_shape = out_shape;
++
++        static const Op& op = Op::Get("tflite_extern");
++        return Call(op, {inputs}, Attrs(attrs), {}); });
++
++TVM_REGISTER_NODE_TYPE(TfLiteExternAttrs);
++
++template <typename AttrType>
++bool TfLiteExternRel(const Array<Type>& types, int num_inputs, const Attrs& attrs,
++              const TypeReporter& reporter) {
++
++  ICHECK_EQ(types.size(), 2) << "the arity of tflite_extern is 2, not " << types.size();
++  /* If we receive a tuple we can continue, if we receive
++   * anything but an incomplete type we should signal an
++   * error.
++   */
++  const auto* tensor_tuple = types[0].as<TupleTypeNode>();
++  if (tensor_tuple == nullptr) {
++    reporter->GetDiagCtx().EmitFatal(
++        Diagnostic::Error(reporter->GetSpan())
++        << "tflite_extern requires a tuple of tensors as the first argument, found "
++        << PrettyPrint(types[0]));
++    return false;
++  } else if (types[0].as<IncompleteTypeNode>() != nullptr) {
++    return false;
++  }
++
++  const auto* param = attrs.as<AttrType>();
++  std::vector<IndexExpr> oshape;
++  for (auto& x: param->out_shape) {
++    oshape.push_back(x);
++  }
++  const auto& out = TensorType(oshape, param->out_dtype);
++  reporter->Assign(types[1], out);
++  return true;
++}
++
++RELAY_REGISTER_OP("tflite_extern")
++    .set_num_inputs(1)
++    .add_argument("inputs", "Tuple", "The input tensors.")
++    .add_type_rel("TfLiteExtern", TfLiteExternRel<TfLiteExternAttrs>)
++    .set_attr<TOpPattern>("TOpPattern", kOpaque)
++    .describe("TODO")
++    .set_support_level(1);
++
++}  // namespace relay
++}  // namespace tvm

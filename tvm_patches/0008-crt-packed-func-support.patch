@@ -1,0 +1,30 @@
+diff --git a/apps/bundle_deploy/crt_config/crt_config.h b/apps/bundle_deploy/crt_config/crt_config.h
+index 11086c0e9..bdc5be273 100644
+--- a/apps/bundle_deploy/crt_config/crt_config.h
++++ b/apps/bundle_deploy/crt_config/crt_config.h
+@@ -43,7 +43,7 @@
+ #define TVM_CRT_MAX_REGISTERED_MODULES 2
+ 
+ /*! Size of the global function registry, in bytes. */
+-#define TVM_CRT_GLOBAL_FUNC_REGISTRY_SIZE_BYTES 200
++#define TVM_CRT_GLOBAL_FUNC_REGISTRY_SIZE_BYTES 300
+ 
+ /*! Maximum packet size, in bytes, including the length header. */
+ #define TVM_CRT_MAX_PACKET_SIZE_BYTES 512
+diff --git a/src/runtime/crt/common/crt_backend_api.c b/src/runtime/crt/common/crt_backend_api.c
+index 56bbbedc1..4e6f57422 100644
+--- a/src/runtime/crt/common/crt_backend_api.c
++++ b/src/runtime/crt/common/crt_backend_api.c
+@@ -32,6 +32,12 @@
+ 
+ #include "crt_config.h"
+ 
++int TVMBackendGetFuncFromEnv(void* mod_node, const char* func_name, TVMFunctionHandle* func) {
++  //TVMModGetFunction((TVMModuleHandle*)mod_node, func_name, 0, func);
++  TVMFuncGetGlobal(func_name, func);
++  return 0;
++}
++
+ void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, int dtype_code_hint,
+                                int dtype_bits_hint) {
+   tvm_crt_error_t err = kTvmErrorNoError;
