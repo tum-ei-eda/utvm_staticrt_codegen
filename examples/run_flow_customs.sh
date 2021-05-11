@@ -9,7 +9,7 @@ run_test() {
     cd target_src
     mkdir -p build
     cd build
-    cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+    cmake -DCMAKE_BUILD_TYPE=DEBUG -DTFLITE_FALLBACK=ON ..
     make
 
     ./example_target_src

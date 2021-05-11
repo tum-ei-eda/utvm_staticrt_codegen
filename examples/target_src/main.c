@@ -24,12 +24,24 @@ void *TVMWrap_GetOutputPtr(int index);
 
 void TVMPlatformAbort(tvm_crt_error_t e) { exit(1); }
 
+#ifdef USE_TFLITE_FALLBACK
+int32_t tflite_extern_wrapper(TVMValue* args, int* type_code,
+                                     int num_args, TVMValue* out_value,
+                                     int* out_type_code);
+#endif  // USE_TFLITE_FALLBACK
 
 int main()
 {
     TVMWrap_Init();
 
     *(float*)TVMWrap_GetInputPtr(0) = 3.14f/2;
+
+#ifdef USE_TFLITE_FALLBACK
+    TVMFuncRegisterGlobal(
+    //"tvm.runtime.tflite_custom_op",
+    "tvm.runtime.tflite_extern_wrapper",
+    (TVMFunctionHandle)&tflite_extern_wrapper, 0);
+#endif  // USE_TFLITE_FALLBACK
 
     TVMWrap_Run();
 

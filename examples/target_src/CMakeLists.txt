@@ -21,3 +21,7 @@ TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC
     ${TVM_DIR}/3rdparty/dlpack/include
     ${TVM_DIR}/apps/bundle_deploy/crt_config
 )
+
+IF(TFLITE_FALLBACK)
+    ADD_DEFINITIONS(-DUSE_TFLITE_FALLBACK)
+ENDIF()
