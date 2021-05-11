@@ -9,7 +9,7 @@ run_test() {
     cd target_src
     mkdir -p build
     cd build
-    cmake ..
+    cmake -DCMAKE_BUILD_TYPE=DEBUG ..
     make
 
     ./example_target_src
