@@ -12,4 +12,4 @@ TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC
     ${TVM_DIR}/apps/bundle_deploy/crt_config
 )
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} tvm_static_rt)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} tvm_static_rt tflite_wrapper)
