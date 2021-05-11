@@ -7,21 +7,23 @@ INCLUDE(../../cmake/LinkTVM.cmake)
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 
-file(GLOB KERNEL_SRCS
-     ../out/kernels*.c
+SET(OUT_DIR
+    ${PROJECT_SOURCE_DIR}/../out/
 )
 
-ADD_EXECUTABLE(${PROJECT_NAME}
-    main.c
-    ${KERNEL_SRCS}
-    ../out/staticrt.c
+FILE(GLOB KERNEL_SRCS
+     ${OUT_DIR}/kernels*.c
 )
-TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC
-    ${TVM_DIR}/include
-    ${TVM_DIR}/3rdparty/dlpack/include
-    ${TVM_DIR}/apps/bundle_deploy/crt_config
+
+SET(COMMON_SRCS
+    ${PROJECT_SOURCE_DIR}/main.c
+    ${KERNEL_SRCS}
 )
 
 IF(TFLITE_FALLBACK)
     ADD_DEFINITIONS(-DUSE_TFLITE_FALLBACK)
 ENDIF()
+
+ADD_SUBDIRECTORY(static_runtime)
+ADD_SUBDIRECTORY(graph_runtime)
+

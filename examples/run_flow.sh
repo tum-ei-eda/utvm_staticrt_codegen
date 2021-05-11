@@ -10,9 +10,14 @@ run_test() {
     mkdir -p build
     cd build
     cmake -DCMAKE_BUILD_TYPE=Debug ..
-    make
 
-    ./example_target_src
+    # Static Runtime
+    make static_runtime
+    ./static_runtime/static_runtime
+
+    # Graph Runtime
+    make graph_runtime
+    ./graph_runtime/graph_runtime
 
     cd ../..
 }

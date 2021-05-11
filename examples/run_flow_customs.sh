@@ -10,14 +10,20 @@ run_test() {
     mkdir -p build
     cd build
     cmake -DCMAKE_BUILD_TYPE=DEBUG -DTFLITE_FALLBACK=ON ..
-    make
 
-    ./example_target_src
+    # Static Runtime
+    make static_runtime
+    ./static_runtime/static_runtime
+
+    # Graph Runtime
+    make graph_runtime
+    ./graph_runtime/graph_runtime
 
     cd ../..
 }
 
+#run_test sine_model.tflite 0
 #run_test model_with_add.tflite 0
 #run_test model_with_add2.tflite 0
-run_test sine_model.tflite 0
+#run_test sine_model.tflite 0
 run_test cifar10.tflite 28800
