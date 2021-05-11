@@ -13,6 +13,7 @@ from tvm import ir
 from tvm import autotvm
 from tvm.contrib import graph_runtime
 
+import tflite
 from tflite.TensorType import TensorType as TType
 
 import compiler_ext
@@ -20,17 +21,30 @@ import codegen
 
 from tvm.relay.frontend.tflite import OperatorConverter
 def get_custom_convert_map(model):
+    from tvm.relay import op as _op
+    import struct
 
     def convert_tflite_custom(self, op, builtin=False):
         """Convert TFLite custom op"""
         print("convert_tflite_custom")
 
         input_tensors = self.get_input_tensors(op)
-        inputs = [ self.get_expr(input_tensor.tensor_idx) for input_tensor in input_tensors]
-        #inputs = [ relay.annotation.compiler_begin(self.get_expr(input_tensor.tensor_idx), "tflitecompiler") for input_tensor in input_tensors]
 
         output_tensors = self.get_output_tensors(op)
-        #outputs = [ self.get_expr(output_tensor.tensor_idx) for output_tensor in output_tensors]
+        assert len(output_tensors) == 1, "output tensors length should be 1"
+        output_tensor = output_tensors[0]
+        output_tensor_shape = list(self.get_tensor_shape(output_tensor))
+        output_tensor_type_str = self.get_tensor_type_str(output_tensor.tensor.Type())
+
+        inputs = []
+        for input_tensor in input_tensors:
+            if self.has_expr(input_tensor.tensor_idx):
+                inputs.append(self.get_expr(input_tensor.tensor_idx))
+            else:
+                input_value = self.get_tensor_value(input_tensor)
+                input_tensor_type_str =  self.get_tensor_type_str(input_tensor.tensor.Type())
+                inputs.append(self.exp_tab.new_const(input_value, dtype=input_tensor_type_str))
+        #inputs = [ relay.annotation.compiler_begin(input_expr), "tflitecompiler") for input_expr in inputs]
 
         try:
             from tflite.TensorType import TensorType
@@ -41,26 +55,52 @@ def get_custom_convert_map(model):
         if builtin:
             from tflite.BuiltinOptions import BuiltinOptions
             from tflite.BuiltinOperator import BuiltinOperator
+            op_options = op.BuiltinOptions()
             if op_code.BuiltinCode() == BuiltinOperator.FULLY_CONNECTED:
                 from tflite.FullyConnectedOptions import FullyConnectedOptions
-                out = self.convert_fully_connected(op)
+                fully_connected_options = FullyConnectedOptions()
+                fully_connected_options.Init(op_options.Bytes, op_options.Pos)
+                builtin_options_dict = {
+                    'activation': fully_connected_options.FusedActivationFunction(),
+                    'weights_format': fully_connected_options.WeightsFormat(),
+                    'keep_num_dims': fully_connected_options.KeepNumDims(),
+                    'asymmetric_quantize_inputs': fully_connected_options.AsymmetricQuantizeInputs()
+                }
+                builtin_options_raw = struct.pack("IIBB", *builtin_options_dict.values())
+                out = _op.contrib.tflite_extern(inputs, name="FULLY_CONNECTED", builtin=True, options=list(builtin_options_raw), out_dtype=output_tensor_type_str, out_shape=output_tensor_shape)
             elif op_code.BuiltinCode() == BuiltinOperator.ADD:
                 from tflite.AddOptions import AddOptions
-                out = self.convert_add(op)
+                add_options = AddOptions()
+                add_options.Init(op_options.Bytes, op_options.Pos)
+                builtin_options_dict = {
+                    'activation': add_options.FusedActivationFunction(),
+                    'pot_scale_int16': add_options.PotScaleInt16()
+                }
+                builtin_options_raw = struct.pack("IB", *builtin_options_dict.values())
+                out = _op.contrib.tflite_extern(inputs, name="ADD", builtin=True, options=list(builtin_options_raw), out_dtype=output_tensor_type_str, out_shape=output_tensor_shape)
             elif op_code.BuiltinCode() == BuiltinOperator.CONV_2D:
                 from tflite.Conv2DOptions import Conv2DOptions
-                out = self.convert_conv2d(op)
+                conv_options = Conv2DOptions()
+                conv_options.Init(op_options.Bytes, op_options.Pos)
+                builtin_options_dict = {
+                    'padding': conv_options.Padding(),
+                    'stride_width': conv_options.StrideW(),
+                    'stride_height': conv_options.StrideH(),
+                    'activation': conv_options.FusedActivationFunction(),
+                    'dilation_width_factor': conv_options.DilationWFactor(),
+                    'dilation_height_factor': conv_options.DilationHFactor()
+                }
+                builtin_options_raw = struct.pack("IIIIII", *builtin_options_dict.values())
+                out = _op.contrib.tflite_extern(inputs, name="CONV_2D", builtin=True, options=list(builtin_options_raw), out_dtype=output_tensor_type_str, out_shape=output_tensor_shape)
             else:
                 raise NotImplementedError
         else:
-            from tflite.CustomOptions import CustomOptions
-            assert(op_code.BuiltinCode() != tflite.BuiltinOperator.CUSTOM)
+            assert(op_code.BuiltinCode() == tflite.BuiltinOperator.CUSTOM)
             flexbuffer = op.CustomOptionsAsNumpy().tobytes()
             op_code_list_idx = op.OpcodeIndex()
             custom_op_code_str = self.model.OperatorCodes(op_code_list_idx).CustomCode().decode('utf-8')
             print("CUSTOM:", custom_op_code_str)
-            # out = _op.tflite_extern(inputs, name=custom_op_code_str, options=list(flexbuffer), out_dtype="float32")
-            raise NotImplementedError
+            out = _op.contrib.tflite_extern(inputs, name=custom_op_code_str, builtin=False, options=list(flexbuffer), out_dtype=output_tensor_type_str, out_shape=output_tensor_shape)
 
         #out = relay.annotation.compiler_end(out, "tflitecompiler")
         return out
@@ -68,7 +108,7 @@ def get_custom_convert_map(model):
     def convert_add_wrapper(self, op):
         print("ADD")
 
-        replace_with_tflite_op = False
+        replace_with_tflite_op = True
         if replace_with_tflite_op:
             return convert_tflite_custom(self, op, builtin=True)
         else:
@@ -76,7 +116,7 @@ def get_custom_convert_map(model):
 
     def convert_fully_connected_wrapper(self, op):
         print("FULLY_CONNECTED")
-        replace_with_tflite_op = False
+        replace_with_tflite_op = True
         if replace_with_tflite_op:
             return convert_tflite_custom(self, op, builtin=True)
         else:
@@ -146,7 +186,7 @@ def get_custom_convert_map(model):
             else:
                 return False
 
-        replace_with_tflite_op = False
+        replace_with_tflite_op = True
         if replace_with_tflite_op:
             return convert_tflite_custom(self, op, builtin=True)
         else:
