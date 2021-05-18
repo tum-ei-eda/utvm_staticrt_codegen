@@ -17,7 +17,7 @@ ADD_LIBRARY(tvm_static_rt STATIC
     ${TVM_DIR}/src/runtime/crt/common/func_registry.c
     ${TVM_DIR}/src/runtime/crt/common/ndarray.c
     ${TVM_DIR}/src/runtime/crt/common/packed_func.c
-    ${TVM_DIR}/src/runtime/crt/memory/memory.c
+    ${TVM_DIR}/src/runtime/crt/memory/page_allocator.c
     ${TVM_DIR}/src/runtime/crt/graph_executor/graph_executor.c
     ${TVM_DIR}/src/runtime/crt/graph_executor/load_json.c
 )

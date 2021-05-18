@@ -3,7 +3,6 @@
 #include "tvm/runtime/crt/internal/graph_executor/graph_executor.h"
 #include "tvm/runtime/crt/crt.h"
 #include "tvm/runtime/crt/packed_func.h"
-#include "tvm/runtime/crt/memory.h"
 #include "bundle.h"
 
 #include <stdbool.h>
