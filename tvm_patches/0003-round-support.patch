@@ -1,11 +1,11 @@
 diff --git a/src/target/source/codegen_c.cc b/src/target/source/codegen_c.cc
-index 5eaf1e890..30584d9ac 100644
+index d4d0e54c6..20ee9c58a 100644
 --- a/src/target/source/codegen_c.cc
 +++ b/src/target/source/codegen_c.cc
-@@ -662,6 +662,10 @@ void CodeGenC::VisitExpr_(const CallNode* op, std::ostream& os) {  // NOLINT(*)
-       os << " != ";
-       this->PrintExpr(op->args[0], os);
-       os << ")";
+@@ -667,6 +667,10 @@ void CodeGenC::VisitExpr_(const CallNode* op, std::ostream& os) {  // NOLINT(*)
+       const StringImmNode* str = op->args[0].as<StringImmNode>();
+       ICHECK(str != nullptr);
+       os << "__tvm_param__" << str->value;
 +    } else if (ptr_op->name == "tir.round") {
 +      os << "(";
 +      this->PrintExpr(op->args[0], os);
