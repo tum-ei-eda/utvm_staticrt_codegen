@@ -95,7 +95,7 @@ class TVMFlow:
 
         with tvm.transform.PassContext(opt_level=self.opt_level, config=cfg):
             c_mod = relay.build(self.mod, target=self.target, params=self.params)
-            self.graph = c_mod.get_json()
+            self.graph = c_mod.get_graph_json()
             self.c_params = c_mod.get_params()
 
         if not self.local:
