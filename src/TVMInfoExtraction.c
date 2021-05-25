@@ -166,7 +166,7 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
                     if (p >= ps && p + arg->dataSize <= ps + sz) {
                         // Arg is mapped to storage. Is static if part of params file.
                         storage = GetOrAddStorage(gi, (void*)ps, sz, IsInList(eids[j], staticInputEIDs, numStaticInputEIDs));
-                        arg->offset = (uintptr_t)storage->buffer - (uintptr_t)arg->data;
+                        arg->offset = (uintptr_t)arg->data - (uintptr_t)storage->buffer;
                         break;
                     }
                 }
