@@ -70,6 +70,7 @@ def generateTargetCode(outFileName, graph, params, modelInfo):
 
 #include <stdint.h>
 #include "tvm/runtime/c_runtime_api.h"
+#include "tvm/runtime/crt/packed_func.h"
 #include "bundle.h"
 
 '''
@@ -80,6 +81,8 @@ def generateTargetCode(outFileName, graph, params, modelInfo):
         f.write("const uint64_t g_params_size = " + str(len(params)) + ";\n")
 
         mainCode = '''
+
+TVMModuleHandle TVMArgs_AsModuleHandle(const TVMArgs* args, size_t index);
 
 void *g_handle = NULL;
 
