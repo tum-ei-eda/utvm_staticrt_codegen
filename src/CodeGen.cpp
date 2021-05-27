@@ -158,24 +158,7 @@ void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, 
 int TVMBackendFreeWorkspace(int device_type, int device_id, void* ptr) {
   return 0;
 }
-)CODE";
 
-    std::ofstream outH(outFileName + ".h");
-    outH << R"CODE(
-#ifndef UTVM_STATICRT_CODEGEN_H
-#define UTVM_STATICRT_CODEGEN_H
-
-#include <stddef.h>
-
-
-void TVMWrap_Init();
-void *TVMWrap_GetInputPtr(int index);
-size_t TVMWrap_GetInputSize(int index);
-void TVMWrap_Run();
-void *TVMWrap_GetOutputPtr(int index);
-size_t TVMWrap_GetOutputSize(int index);
-
-#endif
 void TVMPlatformAbort(tvm_crt_error_t code) {
   exit(1);
 }

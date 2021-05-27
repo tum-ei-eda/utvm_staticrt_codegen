@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "tvm_wrapper.h"
 
 #ifdef _DEBUG
 #include <stdio.h>
@@ -8,12 +9,6 @@
 #else
 #define DBGPRINTF(format, ...)
 #endif
-
-
-void TVMWrap_Init();
-void *TVMWrap_GetInputPtr(int index);
-void TVMWrap_Run();
-void *TVMWrap_GetOutputPtr(int index);
 
 int main()
 {
