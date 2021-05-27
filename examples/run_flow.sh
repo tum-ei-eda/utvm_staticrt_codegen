@@ -17,5 +17,6 @@ run_test() {
     cd ../..
 }
 
-run_test sine_model.tflite 0
+run_test sine_model.tflite 64
+# Warning: Results for cifar10 will be worng because there is more than one Allocation per Operator!
 run_test cifar10.tflite 28800
