@@ -51,8 +51,15 @@ def getMeta(tensors, withNames=False):
     out += "    uint8_t *data[] = { "
     for i, t in enumerate(tensors):
         out += "data_" + str(i) + ", "
-    out += "};\n"
+    out += "};"
 
+    return out
+
+def getSizes(tensors):
+    out = "size_t sizes[] = { "
+    for t in tensors:
+        out += str(t.size) + ", "
+    out += "};"
     return out
 
 
@@ -68,9 +75,9 @@ def generateTargetCode(outFileName, graph, params, modelInfo):
 '''
         f.write(fill(header, time=datetime.now()))
 
-        f.write("const char *g_graph = \"" + escapeJson(graph) + "\";\n")
-        f.write("unsigned char g_params[] = { " + toCArray(params) + "\n};\n")
-        f.write("uint64_t g_params_size = " + str(len(params)) + ";\n")
+        f.write("const char * const g_graph = \"" + escapeJson(graph) + "\";\n")
+        f.write("const unsigned char g_params[] = { " + toCArray(params) + "\n};\n")
+        f.write("const uint64_t g_params_size = " + str(len(params)) + ";\n")
 
         mainCode = '''
 
@@ -100,6 +107,13 @@ void *TVMWrap_GetInputPtr(int index)
     return data[index];
 }
 
+size_t TVMWrap_GetInputSize(int index)
+{
+    ${inSizes}
+
+    return sizes[index];
+}
+
 void TVMWrap_Run()
 {
     tvm_runtime_run(g_handle);
@@ -123,5 +137,20 @@ void *TVMWrap_GetOutputPtr(int index)
 
     return data[index];
 }
+
+size_t TVMWrap_GetOutputSize(int index)
+{
+    ${outSizes}
+
+    return sizes[index];
+}
 '''
-        f.write(fill(mainCode, inMeta=getMeta(modelInfo.inTensors, True), outMeta=getMeta(modelInfo.outTensors), inNDims=2, outNDims=2))
+        f.write(fill(
+            mainCode,
+            inMeta=getMeta(modelInfo.inTensors, True),
+            outMeta=getMeta(modelInfo.outTensors),
+            inNDims=2,
+            outNDims=2,
+            inSizes=getSizes(modelInfo.inTensors),
+            outSizes=getSizes(modelInfo.outTensors)))
+
