@@ -69,7 +69,9 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
             << "\n";
     }
 
+    out << "#include <stdlib.h>\n";
     out << "#include <string.h>\n";
+    out << "#include <tvm/runtime/crt/error_codes.h>\n";
     out << "#include \"tvm/runtime/c_runtime_api.h\"\n\n";
     out << "typedef struct ArgInfo { void *buffer; size_t size; } ArgInfo;\n\n";
 
@@ -174,5 +176,9 @@ void *TVMWrap_GetOutputPtr(int index);
 size_t TVMWrap_GetOutputSize(int index);
 
 #endif
+void TVMPlatformAbort(tvm_crt_error_t code) {
+  exit(1);
+}
 )CODE";
+
 }
