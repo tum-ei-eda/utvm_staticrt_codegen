@@ -69,7 +69,9 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
             << "\n";
     }
 
+    out << "#include <stdlib.h>\n";
     out << "#include <string.h>\n";
+    out << "#include <tvm/runtime/crt/error_codes.h>\n";
     out << "#include \"tvm/runtime/c_runtime_api.h\"\n\n";
     out << "typedef struct ArgInfo { void *buffer; size_t size; } ArgInfo;\n\n";
 
@@ -156,23 +158,10 @@ void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, 
 int TVMBackendFreeWorkspace(int device_type, int device_id, void* ptr) {
   return 0;
 }
+
+void TVMPlatformAbort(tvm_crt_error_t code) {
+  exit(1);
+}
 )CODE";
 
-    std::ofstream outH(outFileName + ".h");
-    outH << R"CODE(
-#ifndef UTVM_STATICRT_CODEGEN_H
-#define UTVM_STATICRT_CODEGEN_H
-
-#include <stddef.h>
-
-
-void TVMWrap_Init();
-void *TVMWrap_GetInputPtr(int index);
-size_t TVMWrap_GetInputSize(int index);
-void TVMWrap_Run();
-void *TVMWrap_GetOutputPtr(int index);
-size_t TVMWrap_GetOutputSize(int index);
-
-#endif
-)CODE";
 }

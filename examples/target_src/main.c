@@ -1,8 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "tvm/runtime/c_runtime_api.h"
-
+#include "tvm_wrapper.h"
 
 #ifdef _DEBUG
 #include <stdio.h>
@@ -10,20 +9,6 @@
 #else
 #define DBGPRINTF(format, ...)
 #endif
-
-
-#include <tvm/runtime/crt/packed_func.h>
-TVMModuleHandle TVMArgs_AsModuleHandle(const TVMArgs* args, size_t index);
-
-
-void TVMWrap_Init();
-void *TVMWrap_GetInputPtr(int index);
-void TVMWrap_Run();
-void *TVMWrap_GetOutputPtr(int index);
-
-
-void TVMPlatformAbort(tvm_crt_error_t e) { exit(1); }
-
 
 int main()
 {
