@@ -2,6 +2,8 @@ import os
 import sys
 import logging
 import shutil
+import tarfile
+import json
 
 import numpy as np
 
@@ -12,6 +14,8 @@ from tvm import relay
 from tvm import ir
 from tvm import autotvm
 from tvm.contrib import graph_runtime
+from tvm.contrib import utils as tvm_utils
+from tvm.micro import export_model_library_format
 
 from tflite.TensorType import TensorType as TType
 
@@ -99,6 +103,18 @@ class TVMFlow:
             self.c_params = c_mod.get_params()
 
         if not self.local:
+            # Extract metadata.
+            mlfDir = tvm_utils.tempdir().temp_dir
+            os.makedirs(mlfDir, exist_ok=True)
+            tarFile = os.path.join(mlfDir, "archive.tar")
+            export_model_library_format(c_mod, tarFile)
+            tarfile.open(tarFile).extractall(mlfDir)
+            with open(os.path.join(mlfDir, "metadata.json")) as f:
+                metadata = json.load(f)
+            workspaceBytes = 0
+            for op in metadata["memory"]["functions"]["operator_functions"]:
+                workspaceBytes = max(workspaceBytes, op["workspace"][0]["workspace_size_bytes"])
+
             # Cross compile
             self.workspace = tvm.micro.Workspace(debug=True)
             opts = tvm.micro.default_options(os.path.join(tvm.micro.get_standalone_crt_dir(), "template", "host"))
@@ -114,6 +130,9 @@ class TVMFlow:
             # Prepare target data
             outDir = "out"
             os.makedirs(outDir, exist_ok=True)
+            with open(os.path.join(outDir, "workspace_size.txt"), "w") as f:
+                f.write(str(workspaceBytes))
+            shutil.copy2(os.path.join(mlfDir, "metadata.json"), outDir + "/metadata.json")
             shutil.copy2(self.workspace.path + "/src/module/lib1.c", outDir + "/kernels.c")
             shutil.copy2(self.workspace.path + "/src/module/lib0.c", outDir + "/syslib.c")
             with open(outDir + "/graph.json", "w") as f:

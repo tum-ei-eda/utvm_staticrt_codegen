@@ -12,8 +12,4 @@ ADD_EXECUTABLE(${PROJECT_NAME}
     ../out/kernels.c
     ../out/staticrt.c
 )
-TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC
-    ${TVM_DIR}/include
-    ${TVM_DIR}/3rdparty/dlpack/include
-    ${TVM_DIR}/apps/bundle_deploy/crt_config
-)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC tvm_static_rt)

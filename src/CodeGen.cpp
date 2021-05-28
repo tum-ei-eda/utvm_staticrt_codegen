@@ -73,7 +73,13 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
     out << "#include <string.h>\n";
     out << "#include <tvm/runtime/crt/error_codes.h>\n";
     out << "#include \"tvm/runtime/c_runtime_api.h\"\n\n";
+    out << "#include \"tvm/runtime/crt/stack_allocator.h\"\n\n";
+
     out << "typedef struct ArgInfo { void *buffer; size_t size; } ArgInfo;\n\n";
+
+    out << "tvm_workspace_t g_workspace;\n";
+    out << "#define WORKSPACE_SIZE (" << workspaceSize << ")\n";
+    out << "static uint8_t g_workspace_buf[WORKSPACE_SIZE];\n";
 
     // Generate RAM buffers.
     for (size_t i = 0; i < m_storages.size(); i++) {
@@ -113,11 +119,11 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
 
     out << "}\n";
 
-    out << R"CODE(
-void TVMWrap_Init()
-{
-}
-)CODE";
+    out << "\nvoid TVMWrap_Init()\n{\n";
+    if (workspaceSize) {
+        out << "  StackMemoryManager_Init(&g_workspace, g_workspace_buf, WORKSPACE_SIZE);\n";
+    }
+    out << "}\n";
     out << "static const ArgInfo inArgInfo[] = {";
     for (auto &arg : m_inArgs) {
         out << "{&g_storage_" << arg->storageIndex << "[" << arg->offset << "]," << arg->sz << "}, ";
@@ -146,17 +152,13 @@ size_t TVMWrap_GetOutputSize(int index)
 
 void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, int dtype_code_hint,
                                int dtype_bits_hint) {
-)CODE";
-
-    // TODO: how to determine required workspace? do they have more complex lifetimes?
-    out << "  static uint8_t buffer[" << workspaceSize << "];\n";
-    out << "  return &buffer;\n";
-
-    out << R"CODE(
+  void *out_ptr = NULL;
+  tvm_crt_error_t err = StackMemoryManager_Allocate(&g_workspace, nbytes, &out_ptr);
+  return out_ptr;
 }
 
 int TVMBackendFreeWorkspace(int device_type, int device_id, void* ptr) {
-  return 0;
+  return StackMemoryManager_Free(&g_workspace, ptr);
 }
 
 void TVMPlatformAbort(tvm_crt_error_t code) {
