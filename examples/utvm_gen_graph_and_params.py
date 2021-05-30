@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import shutil
+import argparse
 import tarfile
 import json
 
@@ -60,13 +61,18 @@ class ModelInfo:
 
 
 class TVMFlow:
-    def __init__(self):
+    def __init__(self, aot=False, outDir=os.path.join(os.getcwd(), "out")):
         self.opt_level = 3
         self.local = False
+        self.useAOT = aot
+        self.outDir = outDir
         if self.local:
             self.target = "llvm"
         else:
-            self.target = tvm.target.target.micro("host")
+            if self.useAOT:
+                self.target = tvm.target.Target("c -runtime=c --link-params --executor=aot --workspace-byte-alignment=1")
+            else:
+                self.target = tvm.target.target.micro("host")
 
 
     def loadModel(self, path):
@@ -99,7 +105,10 @@ class TVMFlow:
 
         with tvm.transform.PassContext(opt_level=self.opt_level, config=cfg):
             c_mod = relay.build(self.mod, target=self.target, params=self.params)
-            self.graph = c_mod.get_graph_json()
+            if not self.useAOT:
+                self.graph = c_mod.get_graph_json()
+            else:
+                self.graph = None
             self.c_params = c_mod.get_params()
 
         if not self.local:
@@ -109,45 +118,63 @@ class TVMFlow:
             tarFile = os.path.join(mlfDir, "archive.tar")
             export_model_library_format(c_mod, tarFile)
             tarfile.open(tarFile).extractall(mlfDir)
-            with open(os.path.join(mlfDir, "metadata.json")) as f:
-                metadata = json.load(f)
+
+            # Cross compile
+            if not self.useAOT:
+                self.workspace = tvm.micro.Workspace(debug=True)
+                opts = tvm.micro.default_options(os.path.join(tvm.micro.get_standalone_crt_dir(), "template", "host"))
+                self.compiler = compiler_ext.Compiler_Ext(target=self.target)
+                self.micro_binary = tvm.micro.build_static_runtime(
+                    self.workspace,
+                    self.compiler,
+                    c_mod,
+                    opts,
+                    executor="aot" if self.useAOT else "host-driven",
+                    extra_libs=[tvm.micro.get_standalone_crt_lib("memory")]
+                )
+
+            if os.path.exists(os.path.join(self.outDir, "params.bin")):
+                shutil.rmtree(self.outDir)
+
+            shutil.copytree(os.path.join(mlfDir, "codegen", "host", "src"), self.outDir)
+            shutil.copy2(os.path.join(mlfDir, "relay.txt"), os.path.join(self.outDir, "relay.txt"))
+            shutil.copy2(os.path.join(mlfDir, "metadata.json"), os.path.join(self.outDir, "metadata.json"))
+
+            if self.graph:
+                with open(os.path.join(self.outDir, "graph.json"), "w") as f:
+                    f.write(self.graph)
+
+            with open(os.path.join(self.outDir, "metadata.json")) as json_f:
+                metadata = json.load(json_f)
             workspaceBytes = 0
             for op in metadata["memory"]["functions"]["operator_functions"]:
                 workspaceBytes = max(workspaceBytes, op["workspace"][0]["workspace_size_bytes"])
-
-            # Cross compile
-            self.workspace = tvm.micro.Workspace(debug=True)
-            opts = tvm.micro.default_options(os.path.join(tvm.micro.get_standalone_crt_dir(), "template", "host"))
-            self.compiler = compiler_ext.Compiler_Ext(target=self.target)
-            self.micro_binary = tvm.micro.build_static_runtime(
-                self.workspace,
-                self.compiler,
-                c_mod,
-                opts,
-                extra_libs=[tvm.micro.get_standalone_crt_lib("memory")]
-            )
-
-            # Prepare target data
-            outDir = "out"
-            os.makedirs(outDir, exist_ok=True)
-            with open(os.path.join(outDir, "workspace_size.txt"), "w") as f:
+            with open(os.path.join(self.outDir, "workspace_size.txt"), "w") as f:
                 f.write(str(workspaceBytes))
-            shutil.copy2(os.path.join(mlfDir, "metadata.json"), outDir + "/metadata.json")
-            shutil.copy2(self.workspace.path + "/src/module/lib1.c", outDir + "/kernels.c")
-            shutil.copy2(self.workspace.path + "/src/module/lib0.c", outDir + "/syslib.c")
-            with open(outDir + "/graph.json", "w") as f:
-                f.write(self.graph)
-            with open(outDir + "/params.bin", "wb") as f:
+
+            with open(os.path.join(self.outDir, "params.bin"), "wb") as f:
                 f.write(relay.save_param_dict(self.c_params))
-            codegen.generateTargetCode(outDir + "/runtime_wrapper.c", self.graph, relay.save_param_dict(self.c_params), self.modelInfo)
+
+            if self.useAOT:
+                workspaceBytes = metadata["memory"]["functions"]["main"][0]["workspace_size_bytes"]
+                codegen.generateTargetCodeAOT(os.path.join(self.outDir, "aot_wrapper.c"), self.modelInfo, workspace=workspaceBytes)
+            else:
+                codegen.generateTargetCodeRT(os.path.join(self.outDir, "runtime_wrapper.c"), self.graph, relay.save_param_dict(self.c_params), self.modelInfo)
+
 
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage:", sys.argv[0], "model.tflite")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='Run TVM Flow')
+    parser.add_argument('model', metavar="MODEL", type=str, nargs=1, help='Model to process')
+    parser.add_argument('--aot', action='store_true',
+                        help='Use AOT FLow (default: %(default)s)')
+    parser.add_argument('--out-dir', '-o', dest='outdir', metavar='DIR', type=str,
+                        default=os.path.join(os.getcwd(), 'out'), help='''Output directory
+(default: %(default)s)''')
 
-    flow = TVMFlow()
+    args = parser.parse_args()
+
+    flow = TVMFlow(aot=args.aot, outDir=args.outdir)
     flow.loadModel(sys.argv[1])
     flow.build()
 
