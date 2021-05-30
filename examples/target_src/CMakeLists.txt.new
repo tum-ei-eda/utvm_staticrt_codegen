@@ -13,7 +13,7 @@ SET(OUT_DIR
 )
 
 FILE(GLOB KERNEL_SRCS
-     ${OUT_DIR}/lib*.c
+     ${OUT_DIR}/kernels*.c
 )
 
 SET(COMMON_SRCS
@@ -21,7 +21,11 @@ SET(COMMON_SRCS
     ${KERNEL_SRCS}
 )
 
+IF(TFLITE_FALLBACK)
+    ADD_DEFINITIONS(-DUSE_TFLITE_FALLBACK)
+ENDIF()
+
+ADD_SUBDIRECTORY(lib/tflite_wrapper)
 ADD_SUBDIRECTORY(static_runtime)
 ADD_SUBDIRECTORY(graph_runtime)
-ADD_SUBDIRECTORY(aot_runtime)
 

@@ -1,0 +1,22 @@
+PROJECT(static_runtime)
+
+SET(STATIC_SRC
+    ${OUT_DIR}/staticrt.c
+)
+
+MESSAGE(STATUS "PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}")
+
+IF(EXISTS ${STATIC_SRC})
+    ADD_EXECUTABLE(${PROJECT_NAME}
+        ${COMMON_SRCS}
+        ${STATIC_SRC}
+    )
+
+    TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC
+        ${PROJECT_SOURCE_DIR}/..
+    )
+
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} tvm_static_rt)
+ELSE()
+    MESSAGE(STATUS "Skipping aot_runtime because ${STATIC_SRC} was not generated...")
+ENDIF()
