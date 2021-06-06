@@ -117,6 +117,11 @@ size_t TVMWrap_GetInputSize(int index)
     return sizes[index];
 }
 
+size_t TVMWrap_GetNumInputs()
+{
+    return ${numInputs};
+}
+
 void TVMWrap_Run()
 {
     tvm_runtime_run(g_handle);
@@ -147,6 +152,11 @@ size_t TVMWrap_GetOutputSize(int index)
 
     return sizes[index];
 }
+
+size_t TVMWrap_GetNumOutputs()
+{
+    return ${numOutputs};
+}
 '''
         f.write(fill(
             mainCode,
@@ -155,5 +165,7 @@ size_t TVMWrap_GetOutputSize(int index)
             inNDims=2,
             outNDims=2,
             inSizes=getSizes(modelInfo.inTensors),
-            outSizes=getSizes(modelInfo.outTensors)))
+            outSizes=getSizes(modelInfo.outTensors),
+            numInputs=len(modelInfo.inTensors),
+            numOutputs=len(modelInfo.outTensors)))
 

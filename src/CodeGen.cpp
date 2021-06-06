@@ -141,6 +141,10 @@ size_t TVMWrap_GetInputSize(int index)
 {
   return inArgInfo[index].size;
 }
+size_t TVMWrap_GetNumInputs()
+{
+  return )CODE" << m_inArgs.size() << R"CODE(;
+}
 void *TVMWrap_GetOutputPtr(int index)
 {
   return outArgInfo[index].buffer;
@@ -148,6 +152,10 @@ void *TVMWrap_GetOutputPtr(int index)
 size_t TVMWrap_GetOutputSize(int index)
 {
   return outArgInfo[index].size;
+}
+size_t TVMWrap_GetNumOutputs()
+{
+  return )CODE" << m_outArgs.size() << R"CODE(;
 }
 
 void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, int dtype_code_hint,
