@@ -161,11 +161,23 @@ size_t TVMWrap_GetNumOutputs()
 void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, int dtype_code_hint,
                                int dtype_bits_hint) {
   void *out_ptr = NULL;
-  tvm_crt_error_t err = StackMemoryManager_Allocate(&g_workspace, nbytes, &out_ptr);
+#ifdef TVMCG_DEBUG_ALLOCATIONS
+  if (nbytes > (g_workspace.workspace+g_workspace.workspace_size-g_workspace.next_alloc)) {
+    DBGPRINTF("TVMBackendAllocWorkspace(%lu): Allocation would overflow arena!\n", nbytes);
+  }
+#endif
+  if (StackMemoryManager_Allocate(&g_workspace, nbytes, &out_ptr)) {
+    return NULL;
+  }
   return out_ptr;
 }
 
 int TVMBackendFreeWorkspace(int device_type, int device_id, void* ptr) {
+#ifdef TVMCG_DEBUG_ALLOCATIONS
+  if (ptr < g_workspace.workspace || ptr >= g_workspace.workspace + g_workspace.workspace+g_workspace.workspace_size-g_workspace.next_alloc) {
+    DBGPRINTF("TVMBackendFreeWorkspace(%p): Invalid Memory region to be free'd!\n", ptr);
+  }
+#endif
   return StackMemoryManager_Free(&g_workspace, ptr);
 }
 
