@@ -119,3 +119,20 @@ jobs:
         run: cd build && make
       - name: Run Checks
         run: cd build && make check
+  cmake_lint:
+    name: Run CMake Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Requirements
+        shell: bash
+        run: |
+          sudo apt-get install git build-essential cmake python3-dev
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Latest CMake Linter via PIP
+        run: pip3 install cmakelint
+      - name: Run Checks
+        run: |
+          CMAKE_FILES=$(find . \( -iname "*.cmake" -o -name "CMakeLists.txt" \) | grep -v "/build/")
+          cmakelint --quiet --linelength=120 $CMAKE_FILES
+
