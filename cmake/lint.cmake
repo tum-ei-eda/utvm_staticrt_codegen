@@ -1,5 +1,5 @@
-include(ExternalProject)
-find_package(Git REQUIRED)
+INCLUDE(ExternalProject)
+FIND_PACKAGE(Git REQUIRED)
 
 SET(CHECK_FILES
     #${PROJECT_SOURCE_DIR}/src/*.c
@@ -20,18 +20,18 @@ SET(TIDY_SOURCES
 # All checks
 # ------------------------------------------------------------------------------
 
-if(ALL_CHECKS)
+IF(ALL_CHECKS)
     SET(ENABLE_ASTYLE ON)
     SET(ENABLE_CLANG_TIDY ON)
     SET(ENABLE_CPPCHECK ON)
-endif()
+ENDIF()
 
 # ------------------------------------------------------------------------------
 # Git whitespace
 # ------------------------------------------------------------------------------
 
 
-add_custom_target(
+ADD_CUSTOM_TARGET(
     commit
     COMMAND echo COMMAND ${GIT_EXECUTABLE} diff --check HEAD^
     COMMENT "Running git check"
@@ -41,13 +41,13 @@ add_custom_target(
 # Astyle
 # ------------------------------------------------------------------------------
 
-if(ENABLE_ASTYLE)
+IF(ENABLE_ASTYLE)
 
-    list(APPEND ASTYLE_CMAKE_ARGS
+    LIST(APPEND ASTYLE_CMAKE_ARGS
         "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
     )
 
-    ExternalProject_Add(
+    EXTERNALPROJECT_ADD(
         astyle
         GIT_REPOSITORY      https://github.com/Bareflank/astyle.git
         GIT_TAG             v1.2
@@ -61,7 +61,7 @@ if(ENABLE_ASTYLE)
         BINARY_DIR          ${CMAKE_BINARY_DIR}/external/astyle/build
     )
 
-    list(APPEND ASTYLE_ARGS
+    LIST(APPEND ASTYLE_ARGS
         --style=linux
         --lineend=linux
         --suffix=none
@@ -85,74 +85,74 @@ if(ENABLE_ASTYLE)
         ${CHECK_FILES}
     )
 
-    if(NOT WIN32 STREQUAL "1")
-        add_custom_target(
+    IF(NOT WIN32 STREQUAL "1")
+        ADD_CUSTOM_TARGET(
             format
             COMMAND ${CMAKE_BINARY_DIR}/bin/astyle ${ASTYLE_ARGS}
             COMMENT "running astyle"
         )
-    else()
-        add_custom_target(
+    ELSE()
+        ADD_CUSTOM_TARGET(
             format
             COMMAND ${CMAKE_BINARY_DIR}/bin/astyle.exe ${ASTYLE_ARGS}
             COMMENT "running astyle"
         )
-    endif()
+    ENDIF()
 
-endif()
+ENDIF()
 
 # ------------------------------------------------------------------------------
 # Clang Tidy
 # ------------------------------------------------------------------------------
 
-if(ENABLE_CLANG_TIDY)
+IF(ENABLE_CLANG_TIDY)
 
-    find_program(CLANG_TIDY_BIN clang-tidy)
-    find_program(RUN_CLANG_TIDY_BIN run-clang-tidy.py
+    FIND_PROGRAM(CLANG_TIDY_BIN clang-tidy)
+    FIND_PROGRAM(RUN_CLANG_TIDY_BIN run-clang-tidy.py
         PATHS /usr/share/clang
     )
 
-    if(CLANG_TIDY_BIN STREQUAL "CLANG_TIDY_BIN-NOTFOUND")
-        message(FATAL_ERROR "unable to locate clang-tidy")
-    endif()
+    IF(CLANG_TIDY_BIN STREQUAL "CLANG_TIDY_BIN-NOTFOUND")
+        MESSAGE(FATAL_ERROR "unable to locate clang-tidy")
+    ENDIF()
 
-    if(RUN_CLANG_TIDY_BIN STREQUAL "RUN_CLANG_TIDY_BIN-NOTFOUND")
-        message(FATAL_ERROR "unable to locate run-clang-tidy.py")
-    endif()
+    IF(RUN_CLANG_TIDY_BIN STREQUAL "RUN_CLANG_TIDY_BIN-NOTFOUND")
+        MESSAGE(FATAL_ERROR "unable to locate run-clang-tidy.py")
+    ENDIF()
 
     SET(FILTER_REGEX "^((?!Kernel).)*$$")
 
-    list(APPEND RUN_CLANG_TIDY_BIN_ARGS
+    LIST(APPEND RUN_CLANG_TIDY_BIN_ARGS
         -clang-tidy-binary ${CLANG_TIDY_BIN}
         -header-filter="${FILTER_REGEX}"
         -checks=clan*,cert*,misc*,perf*,cppc*,read*,mode*,-cert-err58-cpp,-misc-noexcept-move-constructor
     )
 
-    add_custom_target(
+    ADD_CUSTOM_TARGET(
         tidy
         COMMAND ${RUN_CLANG_TIDY_BIN} ${RUN_CLANG_TIDY_BIN_ARGS} ${TIDY_SOURCES}
         COMMENT "running clang tidy"
     )
 
-    add_custom_target(
+    ADD_CUSTOM_TARGET(
         tidy_list
         COMMAND ${RUN_CLANG_TIDY_BIN} ${RUN_CLANG_TIDY_BIN_ARGS} -export-fixes=tidy.fixes -style=file ${TIDY_SOURCES}
         COMMENT "running clang tidy"
     )
 
-endif()
+ENDIF()
 
 # ------------------------------------------------------------------------------
 # CppCheck
 # ------------------------------------------------------------------------------
 
-if(ENABLE_CPPCHECK)
+IF(ENABLE_CPPCHECK)
 
-    list(APPEND CPPCHECK_CMAKE_ARGS
+    LIST(APPEND CPPCHECK_CMAKE_ARGS
         "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
     )
 
-    ExternalProject_Add(
+    EXTERNALPROJECT_ADD(
         cppcheck
         GIT_REPOSITORY      https://github.com/danmar/cppcheck.git
         GIT_TAG             1.79
@@ -166,7 +166,7 @@ if(ENABLE_CPPCHECK)
         BINARY_DIR          ${CMAKE_BINARY_DIR}/external/cppcheck/build
     )
 
-    list(APPEND CPPCHECK_ARGS
+    LIST(APPEND CPPCHECK_ARGS
         --enable=warning,style,performance,portability
         --suppress=arithOperationsOnVoidPointer
         --std=c99
@@ -179,10 +179,10 @@ if(ENABLE_CPPCHECK)
         -I ${CHECK_FILES}
     )
 
-    add_custom_target(
+    ADD_CUSTOM_TARGET(
         check
         COMMAND ${CMAKE_BINARY_DIR}/bin/cppcheck ${CPPCHECK_ARGS}
         COMMENT "running cppcheck"
     )
 
-endif()
+ENDIF()
