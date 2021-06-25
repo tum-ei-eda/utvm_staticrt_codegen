@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 INCLUDE(cmake/LinkTVM.cmake)
+INCLUDE(cmake/lint.cmake)
 
 ADD_LIBRARY(${PROJECT_NAME}_lib STATIC
     src/TVMInfoExtraction.c
