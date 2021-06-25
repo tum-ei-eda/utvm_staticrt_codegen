@@ -8,15 +8,16 @@
 #include <stdbool.h>
 
 
-const TVMModule* TVMSystemLibEntryPoint(void) {
+const TVMModule *TVMSystemLibEntryPoint(void)
+{
     return NULL;
 }
-TVMModuleHandle TVMArgs_AsModuleHandle(const TVMArgs* args, size_t index);
+TVMModuleHandle TVMArgs_AsModuleHandle(const TVMArgs *args, size_t index);
 
 
 void *create_tvm_rt(const char *json_data, const char *params_data, uint64_t params_size)
 {
-    return (TVMGraphExecutor*)tvm_runtime_create(json_data, params_data, params_size, NULL);
+    return (TVMGraphExecutor *)tvm_runtime_create(json_data, params_data, params_size, NULL);
 }
 
 static size_t GetTensorSize(const DLTensor *t)
@@ -44,10 +45,9 @@ static uint32_t *GetStaticInputEIDs(size_t *numReturned, TVMGraphExecutor *g, co
     uint64_t numNames;
     memcpy(&numNames, p, sizeof(numNames));
     p += sizeof(numNames);
-    char **names = malloc(numNames * sizeof(char*));
+    char **names = malloc(numNames * sizeof(char *));
     uint32_t *out = malloc(numNames * sizeof(uint32_t));
-    for (int i = 0; i < numNames; i++)
-    {
+    for (int i = 0; i < numNames; i++) {
         // Name length
         uint64_t nameLen;
         memcpy(&nameLen, p, sizeof(nameLen));
@@ -68,7 +68,8 @@ static uint32_t *GetStaticInputEIDs(size_t *numReturned, TVMGraphExecutor *g, co
     *numReturned = numNames;
     return out;
 }
-static bool IsInList(uint32_t value, uint32_t *list, size_t len) {
+static bool IsInList(uint32_t value, uint32_t *list, size_t len)
+{
     for (int i = 0; i < len; i++) {
         if (value == list[i]) {
             return true;
@@ -88,7 +89,7 @@ static Storage_Info *GetOrAddStorage(Graph_Info *gi, void *p, size_t sz, bool co
 
     // Create new storage.
     gi->numStorages++;
-    gi->storages = realloc(gi->storages, gi->numStorages * sizeof(Storage_Info*));
+    gi->storages = realloc(gi->storages, gi->numStorages * sizeof(Storage_Info *));
     Storage_Info *newS = malloc(sizeof(Storage_Info));
     gi->storages[gi->numStorages - 1] = newS;
     newS->buffer = p;
@@ -97,7 +98,8 @@ static Storage_Info *GetOrAddStorage(Graph_Info *gi, void *p, size_t sz, bool co
     if (copy_data) {
         newS->static_data = malloc(sz);
         memcpy(newS->static_data, p, sz);
-    } else {
+    }
+    else {
         newS->static_data = NULL;
     }
 
@@ -130,8 +132,7 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
 
     gi->numOps = g->nodes_count;
     gi->ops = malloc(g->nodes_count * sizeof(Op_Info));
-    for (int i = 0; i < g->nodes_count; i++)
-    {
+    for (int i = 0; i < g->nodes_count; i++) {
         // See: TVMGraphExecutor_Run
         if (g->op_execs[i].fexec) {
             printf("op[%i]: %s\n", i, g->nodes[i].param.func_name);
@@ -165,7 +166,7 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
                     size_t sz = GetTensorSize(&g->storage_pool[k].array.dl_tensor);
                     if (p >= ps && p + arg->dataSize <= ps + sz) {
                         // Arg is mapped to storage. Is static if part of params file.
-                        storage = GetOrAddStorage(gi, (void*)ps, sz, IsInList(eids[j], staticInputEIDs, numStaticInputEIDs));
+                        storage = GetOrAddStorage(gi, (void *)ps, sz, IsInList(eids[j], staticInputEIDs, numStaticInputEIDs));
                         arg->offset = (uintptr_t)arg->data - (uintptr_t)storage->buffer;
                         break;
                     }
@@ -183,20 +184,21 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
                     }
                     if (eids[j] == TVMGraphExecutor_GetEntryId(g, g->input_nodes[k], 0)) {
                         gi->numInputs++;
-                        gi->inputs = realloc(gi->inputs, gi->numInputs * sizeof(Arg_Info*));
+                        gi->inputs = realloc(gi->inputs, gi->numInputs * sizeof(Arg_Info *));
                         gi->inputs[gi->numInputs - 1] = arg;
                     }
                 }
                 for (int k = 0; k < g->outputs_count; k++) {
                     if (eids[j] == TVMGraphExecutor_GetEntryId(g, g->outputs[k].node_id, g->outputs[k].index)) {
                         gi->numOutputs++;
-                        gi->outputs = realloc(gi->outputs, gi->numOutputs * sizeof(Arg_Info*));
+                        gi->outputs = realloc(gi->outputs, gi->numOutputs * sizeof(Arg_Info *));
                         gi->outputs[gi->numOutputs - 1] = arg;
                     }
                 }
             }
             free(eids);
-        } else {
+        }
+        else {
             gi->ops[i].active = 0;
         }
     }

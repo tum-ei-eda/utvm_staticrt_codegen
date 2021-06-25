@@ -32,8 +32,8 @@ private:
         std::vector<std::unique_ptr<Arg>> args;
     };
     std::vector<Op> m_ops;
-    std::vector<Arg*> m_inArgs;
-    std::vector<Arg*> m_outArgs;
+    std::vector<Arg *> m_inArgs;
+    std::vector<Arg *> m_outArgs;
 };
 
 #endif
