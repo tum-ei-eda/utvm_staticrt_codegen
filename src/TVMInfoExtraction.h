@@ -4,31 +4,27 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct Storage_Info
-{
+typedef struct Storage_Info {
     void *buffer;
     size_t size;
     uint8_t *static_data;
 } Storage_Info;
 
-typedef struct Arg_Info
-{
+typedef struct Arg_Info {
     void *data;
     ptrdiff_t offset;
     size_t dataSize;
     Storage_Info *storage;
 } Arg_Info;
 
-typedef struct Op_Info
-{
+typedef struct Op_Info {
     int active;
     char name[120];
     int numArgs;
     Arg_Info *args;
 } Op_Info;
 
-typedef struct Graph_Info
-{
+typedef struct Graph_Info {
     int numOps;
     Op_Info *ops;
     int numStorages;

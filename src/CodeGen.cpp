@@ -8,7 +8,8 @@
 #include <algorithm>
 
 
-static std::string GetByteArrayCode(const void *data, size_t len) {
+static std::string GetByteArrayCode(const void *data, size_t len)
+{
     std::stringstream out;
     out << "{\"";
     for (size_t i = 0; i < len; i++) {
