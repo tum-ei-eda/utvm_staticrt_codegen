@@ -101,20 +101,29 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
 
     out << "\nvoid TVMWrap_Run() {\n";
 
+    size_t maxNumArgs = 0;
+    for (size_t i = 0; i < m_ops.size(); i++) {
+        auto &op = m_ops[i];
+        maxNumArgs = std::max(maxNumArgs, op.args.size());
+        for (size_t j = 0; j < op.args.size(); j++) {
+        }
+    }
+
+    out << "  TVMValue args[" << maxNumArgs << "];\n";
+    out << "  int32_t arg_type_ids[" << maxNumArgs << "];\n";
+    out << "  DLTensor dlargs[" << maxNumArgs << "];\n";
+    out << "  for (int i = 0; i < " << maxNumArgs << "; i++) {\n";
+    out << "    args[i].v_handle = &dlargs[i];\n";
+    out << "  }\n\n";
+
     for (size_t i = 0; i < m_ops.size(); i++) {
         auto &op = m_ops[i];
 
-        out << "  TVMValue args_" << i << "[" << op.args.size() << "];\n";
-        out << "  int32_t arg_type_ids_" << i << "[" << op.args.size() << "];\n";
-
         for (size_t j = 0; j < op.args.size(); j++) {
-            std::string argName = "arg_" + std::to_string(i) + "_" + std::to_string(j);
-            out << "  DLTensor " << argName << ";\n";
-            out << "  " << argName << ".data = (void*)&g_storage_" << op.args[j]->storageIndex << "[" << op.args[j]->offset << "];\n";
-            out << "  args_" << i << "[" << j << "].v_handle = &" << argName << ";\n";
+            out << "  " << "dlargs[" << j << "].data = (void*)&g_storage_" << op.args[j]->storageIndex << "[" << op.args[j]->offset << "];\n";
         }
 
-        out << "  " << op.name << "(args_" << i << ", arg_type_ids_" << i << ");\n\n";
+        out << "  " << op.name << "(args, arg_type_ids);\n\n";
     }
 
     out << "}\n";
