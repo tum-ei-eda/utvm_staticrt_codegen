@@ -2,13 +2,7 @@
 #include <stdio.h>
 
 #include "tvm_wrapper.h"
-
-#ifdef _DEBUG
-#include <stdio.h>
-#define DBGPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-#else
-#define DBGPRINTF(format, ...)
-#endif
+#include "printing.h"
 
 int main()
 {

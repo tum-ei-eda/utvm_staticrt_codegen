@@ -72,8 +72,9 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
     out << "#include <stdlib.h>\n";
     out << "#include <string.h>\n";
     out << "#include <tvm/runtime/crt/error_codes.h>\n";
-    out << "#include \"tvm/runtime/c_runtime_api.h\"\n\n";
-    out << "#include \"tvm/runtime/crt/stack_allocator.h\"\n\n";
+    out << "#include <tvm/runtime/c_runtime_api.h>\n";
+    out << "#include <tvm/runtime/crt/stack_allocator.h>\n";
+    out << "#include \"printing.h\"\n\n";
 
     out << "typedef struct ArgInfo { void *buffer; size_t size; } ArgInfo;\n\n";
 
@@ -96,7 +97,7 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
     // Omit unused parameters, because the RISC-V ABI allows it.
     out << "void __nop(void *x, void *y) {}\n";
     for (auto &op : m_ops) {
-        out << "void " << op.name << "(void *, void*);\n";
+        out << "int32_t " << op.name << "(void *, void*);\n";
     }
 
     out << "\nvoid TVMWrap_Run() {\n";
@@ -123,7 +124,9 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
             out << "  " << "dlargs[" << j << "].data = (void*)&g_storage_" << op.args[j]->storageIndex << "[" << op.args[j]->offset << "];\n";
         }
 
-        out << "  " << op.name << "(args, arg_type_ids);\n\n";
+        out << "  if  (" << op.name << "(args, arg_type_ids) != 0) {\n";
+        out << "    TVMPlatformAbort(kTvmErrorPlatformCheckFailure);\n";
+        out << "  }\n";
     }
 
     out << "}\n";
@@ -170,11 +173,23 @@ size_t TVMWrap_GetNumOutputs()
 void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, int dtype_code_hint,
                                int dtype_bits_hint) {
   void *out_ptr = NULL;
-  tvm_crt_error_t err = StackMemoryManager_Allocate(&g_workspace, nbytes, &out_ptr);
+#ifdef TVMCG_DEBUG_ALLOCATIONS
+  if (nbytes > (g_workspace.workspace + g_workspace.workspace_size - g_workspace.next_alloc)) {
+    DBGPRINTF("TVMBackendAllocWorkspace(%lu): Allocation would overflow arena!\n", nbytes);
+  }
+#endif
+  if (StackMemoryManager_Allocate(&g_workspace, nbytes, &out_ptr)) {
+    return NULL;
+  }
   return out_ptr;
 }
 
 int TVMBackendFreeWorkspace(int device_type, int device_id, void* ptr) {
+#ifdef TVMCG_DEBUG_ALLOCATIONS
+  if ((uint8_t*)ptr < g_workspace.workspace || (uint8_t*)ptr >= g_workspace.next_alloc) {
+    DBGPRINTF("TVMBackendFreeWorkspace(%p): Invalid Memory region to be free'd!\n", ptr);
+  }
+#endif
   return StackMemoryManager_Free(&g_workspace, ptr);
 }
 
