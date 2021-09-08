@@ -96,7 +96,7 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
     // Omit unused parameters, because the RISC-V ABI allows it.
     out << "void __nop(void *x, void *y) {}\n";
     for (auto &op : m_ops) {
-        out << "void " << op.name << "(void *, void*);\n";
+        out << "int32_t " << op.name << "(void *, void*);\n";
     }
 
     out << "\nvoid TVMWrap_Run() {\n";
@@ -114,7 +114,9 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
             out << "  args_" << i << "[" << j << "].v_handle = &" << argName << ";\n";
         }
 
-        out << "  " << op.name << "(args_" << i << ", arg_type_ids_" << i << ");\n\n";
+        out << "  if  (" << op.name << "(args_" << i << ", arg_type_ids_" << i << ") != 0) {\n";
+        out << "    TVMPlatformAbort(kTvmErrorPlatformCheckFailure);\n";
+        out << "  }\n";
     }
 
     out << "}\n";
@@ -161,7 +163,9 @@ size_t TVMWrap_GetNumOutputs()
 void* TVMBackendAllocWorkspace(int device_type, int device_id, uint64_t nbytes, int dtype_code_hint,
                                int dtype_bits_hint) {
   void *out_ptr = NULL;
-  tvm_crt_error_t err = StackMemoryManager_Allocate(&g_workspace, nbytes, &out_ptr);
+  if (StackMemoryManager_Allocate(&g_workspace, nbytes, &out_ptr)) {
+    return NULL;
+  }
   return out_ptr;
 }
 
