@@ -7,10 +7,20 @@ INCLUDE(../../cmake/LinkTVM.cmake)
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG -DTVMCG_DEBUG_ALLOCATIONS")
 SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -DTVMCG_DEBUG_ALLOCATIONS")
 
+SET(TVM_OUT_DIR ../out)
+
+FILE(GLOB TVM_KERNELS
+    ${TVM_OUT_DIR}/lib*.c
+    ${TVM_OUT_DIR}/lib*.cc
+    # New model will have model name prefix
+    ${TVM_OUT_DIR}/*_lib*.c
+    ${TVM_OUT_DIR}/*_lib*.cc
+)
+
 ADD_EXECUTABLE(${PROJECT_NAME}
     main.c
-    ../out/kernels.c
-    ../out/staticrt.c
+    ${TVM_OUT_DIR}/staticrt.c
+    ${TVM_KERNELS}
 )
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC tvm_static_rt)
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})

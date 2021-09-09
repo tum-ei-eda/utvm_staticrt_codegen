@@ -19,7 +19,7 @@ from tvm.micro import export_model_library_format
 
 from tflite.TensorType import TensorType as TType
 
-import compiler_ext
+# import compiler_ext
 import codegen
 
 
@@ -116,30 +116,44 @@ class TVMFlow:
                 workspaceBytes = max(workspaceBytes, op["workspace"][0]["workspace_size_bytes"])
 
             # Cross compile
-            self.workspace = tvm.micro.Workspace(debug=True)
-            opts = tvm.micro.default_options(os.path.join(tvm.micro.get_standalone_crt_dir(), "template", "host"))
-            self.compiler = compiler_ext.Compiler_Ext(target=self.target)
-            self.micro_binary = tvm.micro.build_static_runtime(
-                self.workspace,
-                self.compiler,
-                c_mod,
-                opts,
-                extra_libs=[tvm.micro.get_standalone_crt_lib("memory")]
-            )
+            # self.workspace = tvm.micro.Workspace(debug=True)
+            # opts = tvm.micro.default_options(os.path.join(tvm.micro.get_standalone_crt_dir(), "template", "host"))
+            # self.compiler = compiler_ext.Compiler_Ext(target=self.target)
+            # self.micro_binary = tvm.micro.build_static_runtime(
+            #     self.workspace,
+            #     self.compiler,
+            #     c_mod,
+            #     opts,
+            #     extra_libs=[tvm.micro.get_standalone_crt_lib("memory")]
+            # )
 
             # Prepare target data
-            outDir = "out"
-            os.makedirs(outDir, exist_ok=True)
-            with open(os.path.join(outDir, "workspace_size.txt"), "w") as f:
-                f.write(str(workspaceBytes))
-            shutil.copy2(os.path.join(mlfDir, "metadata.json"), outDir + "/metadata.json")
-            shutil.copy2(self.workspace.path + "/src/module/lib1.c", outDir + "/kernels.c")
-            shutil.copy2(self.workspace.path + "/src/module/lib0.c", outDir + "/syslib.c")
-            with open(outDir + "/graph.json", "w") as f:
-                f.write(self.graph)
-            with open(outDir + "/params.bin", "wb") as f:
+            self.outDir = "out"
+            if os.path.exists(os.path.join(self.outDir, "params.bin")):
+                shutil.rmtree(self.outDir)
+
+            shutil.copytree(os.path.join(mlfDir, "codegen", "host", "src"), self.outDir)
+            # TODO: remove this temporary workaround for old tvm version
+            legacy = False
+            if os.path.exists(os.path.join(mlfDir, "src", "relay.txt")):
+                shutil.copy2(os.path.join(mlfDir, "src", "relay.txt"), os.path.join(self.outDir, "relay.txt"))
+            else:
+                legacy = True
+                shutil.copy2(os.path.join(mlfDir, "relay.txt"), os.path.join(self.outDir, "relay.txt"))
+            shutil.copy2(os.path.join(mlfDir, "metadata.json"), os.path.join(self.outDir, "metadata.json"))
+
+            if self.graph:
+                with open(os.path.join(self.outDir, "graph.json"), "w") as f:
+                    f.write(self.graph)
+
+            with open(os.path.join(self.outDir, "metadata.json")) as json_f:
+                metadata = json.load(json_f)
+
+            with open(os.path.join(self.outDir, "params.bin"), "wb") as f:
                 f.write(relay.save_param_dict(self.c_params))
-            codegen.generateTargetCode(outDir + "/runtime_wrapper.c", self.graph, relay.save_param_dict(self.c_params), self.modelInfo)
+            with open(os.path.join(self.outDir, "workspace_size.txt"), "w") as f:
+                f.write(str(workspaceBytes))
+            codegen.generateTargetCode(self.outDir + "/runtime_wrapper.c", self.graph, relay.save_param_dict(self.c_params), self.modelInfo)
 
 
 def main():
