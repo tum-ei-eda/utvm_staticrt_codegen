@@ -1,9 +1,9 @@
 diff --git a/src/runtime/crt/host/main.cc b/src/runtime/crt/host/main.cc
-index 53a057256..03fbecdee 100644
+index 65027dd67..f86829c97 100644
 --- a/src/runtime/crt/host/main.cc
 +++ b/src/runtime/crt/host/main.cc
 @@ -45,7 +45,7 @@ extern "C" {
- ssize_t UTvmWriteFunc(void* context, const uint8_t* data, size_t num_bytes) {
+ ssize_t MicroTVMWriteFunc(void* context, const uint8_t* data, size_t num_bytes) {
    ssize_t to_return = write(STDOUT_FILENO, data, num_bytes);
    fflush(stdout);
 -  fsync(STDOUT_FILENO);
@@ -20,12 +20,14 @@ index 53a057256..03fbecdee 100644
      buffer[i] = (uint8_t)random;
    }
  
-@@ -116,7 +116,7 @@ static char** g_argv = NULL;
+@@ -116,8 +116,8 @@ static char** g_argv = NULL;
  
  int testonly_reset_server(TVMValue* args, int* type_codes, int num_args, TVMValue* out_ret_value,
                            int* out_ret_tcode, void* resource_handle) {
 -  execvp(g_argv[0], g_argv);
+-  perror("microTVM runtime: error restarting");
 +  //execvp(g_argv[0], g_argv);
-   perror("utvm runtime: error restarting");
++  perror("utvm runtime: error restarting");
    return -1;
  }
+ 

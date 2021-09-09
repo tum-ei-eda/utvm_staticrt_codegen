@@ -1,5 +1,5 @@
 diff --git a/cmake/config.cmake b/cmake/config.cmake
-index 7b29df648..40cc5b4eb 100644
+index 8d8186c1b..3b0802a6e 100644
 --- a/cmake/config.cmake
 +++ b/cmake/config.cmake
 @@ -85,7 +85,7 @@ set(USE_VULKAN OFF)
@@ -11,10 +11,10 @@ index 7b29df648..40cc5b4eb 100644
  
  # Whether enable RPC runtime
  set(USE_RPC ON)
-@@ -106,7 +106,7 @@ set(USE_GRAPH_EXECUTOR_CUDA_GRAPH OFF)
+@@ -109,7 +109,7 @@ set(USE_GRAPH_EXECUTOR_CUDA_GRAPH OFF)
  set(USE_PROFILER ON)
  
- # Whether enable uTVM standalone runtime
+ # Whether enable microTVM standalone runtime
 -set(USE_MICRO_STANDALONE_RUNTIME OFF)
 +set(USE_MICRO_STANDALONE_RUNTIME ON)
  
