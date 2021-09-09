@@ -22,6 +22,15 @@ TARGET_INCLUDE_DIRECTORIES(tvm_static_rt PUBLIC
     ${TVM_DIR}/include
     ${TVM_DIR}/3rdparty/dlpack/include
     ${TVM_DIR}/apps/bundle_deploy
-    ${TVM_DIR}/apps/bundle_deploy/crt_config
     ${TVM_DIR}/src/runtime/crt/include
 )
+
+IF(TVM_CRT_CONFIG_DIR)
+    TARGET_INCLUDE_DIRECTORIES(tvm_static_rt PUBLIC
+        ${TVM_CRT_CONFIG_DIR}
+    )
+ELSE()
+    TARGET_INCLUDE_DIRECTORIES(tvm_static_rt PUBLIC
+        ${TVM_DIR}/apps/bundle_deploy/crt_config
+    )
+ENDIF()
