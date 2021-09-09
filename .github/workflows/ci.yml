@@ -30,7 +30,7 @@ jobs:
         cd build
         sed -i -- "s/USE_LLVM OFF/USE_LLVM ..\\/..\\/llvm\\/bin\\/llvm-config/g" config.cmake
         cmake ..
-        cmake --build .
+        cmake --build . -j`nproc`
         cd ..
 
     - name: Build
@@ -39,7 +39,7 @@ jobs:
         mkdir build
         cd build
         cmake ..
-        cmake --build .
+        cmake --build . -j`nproc`
 
     - name: Test
       shell: bash

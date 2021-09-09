@@ -12,7 +12,7 @@ run_test() {
     mkdir -p build
     cd build
     cmake -D$TVM_DIR ..
-    make
+    make -j`nproc`
 
     ./example_target_src
 
