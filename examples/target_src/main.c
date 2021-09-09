@@ -1,8 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <tvm/runtime/crt/error_codes.h>
 
 #include "tvm_wrapper.h"
 #include "printing.h"
+
+void TVMPlatformAbort(tvm_crt_error_t code);
 
 int main()
 {
