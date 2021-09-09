@@ -11,7 +11,7 @@ run_test() {
     cd target_src
     mkdir -p build
     cd build
-    cmake -D$TVM_DIR ..
+    cmake -D$TVM_DIR -DCMAKE_BUILD_TYPE=Debug ..
     make -j`nproc`
 
     ./example_target_src
