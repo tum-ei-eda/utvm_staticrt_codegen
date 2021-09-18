@@ -151,6 +151,7 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
                 eids[j + g->nodes[i].inputs_count] = TVMGraphExecutor_GetEntryId(g, i, j);
             }
             for (int j = 0; j < numArgs; j++) {
+                bool isStatic = IsInList(eids[j], staticInputEIDs, numStaticInputEIDs);
                 Arg_Info *arg = &gi->ops[i].args[j];
                 arg->data = g->data_entry[eids[j]].dl_tensor.data;
                 arg->offset = 0;
@@ -165,7 +166,11 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
                     size_t sz = GetTensorSize(&g->storage_pool[k].array.dl_tensor);
                     if (p >= ps && p + arg->dataSize <= ps + sz) {
                         // Arg is mapped to storage. Is static if part of params file.
-                        storage = GetOrAddStorage(gi, (void*)ps, sz, IsInList(eids[j], staticInputEIDs, numStaticInputEIDs));
+                        if (isStatic) {
+                            // Somehow static args can be in storages that are larger than required.
+                            sz = arg->dataSize;
+                        }
+                        storage = GetOrAddStorage(gi, (void*)ps, sz, isStatic);
                         arg->offset = (uintptr_t)arg->data - (uintptr_t)storage->buffer;
                         break;
                     }
@@ -177,7 +182,7 @@ Graph_Info *extract_graph_info(void *grt, const char *params_data, uint64_t para
                 arg->storage = storage;
 
                 for (int k = 0; k < g->input_nodes_count; k++) {
-                    if (IsInList(eids[j], staticInputEIDs, numStaticInputEIDs)) {
+                    if (isStatic) {
                         // Do not consider statically assigned args as input.
                         continue;
                     }
