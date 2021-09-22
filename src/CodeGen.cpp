@@ -76,6 +76,8 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
     out << "#include <tvm/runtime/crt/stack_allocator.h>\n";
     out << "#include \"printing.h\"\n\n";
 
+    out << "void TVMPlatformAbort(tvm_crt_error_t code);\n\n";
+
     out << "typedef struct ArgInfo { void *buffer; size_t size; } ArgInfo;\n\n";
 
     out << "tvm_workspace_t g_workspace;\n";
