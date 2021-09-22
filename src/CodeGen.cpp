@@ -100,6 +100,8 @@ void CodeGenerator::generateCode(const std::string &outFileName, size_t workspac
         out << "int32_t " << op.name << "(void *, void*);\n";
         maxNumArgs = std::max(maxNumArgs, op.args.size());
     }
+    
+    out << "\nvoid __attribute__((noreturn)) TVMPlatformAbort(tvm_crt_error_t error_code);\n";
 
     out << "\nvoid TVMWrap_Run() {\n";
 
@@ -188,7 +190,7 @@ int TVMBackendFreeWorkspace(int device_type, int device_id, void* ptr) {
   return StackMemoryManager_Free(&g_workspace, ptr);
 }
 
-void TVMPlatformAbort(tvm_crt_error_t code) {
+void __attribute__((noreturn)) TVMPlatformAbort(tvm_crt_error_t error_code) {
   exit(1);
 }
 )CODE";
